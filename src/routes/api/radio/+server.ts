@@ -1,11 +1,5 @@
-import { json } from '@sveltejs/kit';
-
+import { get } from './get';
 import { post } from './post';
 
-export async function GET() {
-    return json({
-        message: 'hello'
-    });
-}
-
+export const GET = get;
 export const POST = post;
