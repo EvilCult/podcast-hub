@@ -1,4 +1,4 @@
-export type Radio = {
+export type RadioData = {
     id: number;
     title: string;
     cover: string | null;
@@ -9,7 +9,16 @@ export type Radio = {
     is_del: number;
 };
 
-export type RadioListItem = {
+export type RadioCreate = {
+    title: string;
+    cover: string | null;
+    digest: string | null;
+    feed: string;
+    resource: string | null;
+    last_update: number | null;
+};
+
+export type RadioItem = {
     id: number;
     title: string;
     cover: string | null;
