@@ -1,4 +1,4 @@
-import { fetchAll, getById, insert, updateById, rmById } from '$lib/server/db';
+import { fetchAll, getById, insert, updateById, rmById } from '$lib/server/repos/db';
 
 const TABLE = 'episodes';
 

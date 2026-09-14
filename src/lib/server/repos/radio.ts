@@ -1,25 +1,7 @@
-import { fetchAll, getById, insert, updateById, rmById } from '$lib/server/db';
+import { fetchAll, getById, insert, updateById, rmById } from '$lib/server/repos/db';
+import type { Radio, RadioListItem } from '$lib/server/models/radio_model';
 
 const TABLE = 'radios';
-
-export type Radio = {
-    id: number;
-    title: string;
-    cover: string | null;
-    digest: string | null;
-    feed: string;
-    resource: string | null;
-    last_update: number | null;
-    is_del: number;
-};
-
-export type RadioListItem = {
-    id: number;
-    title: string;
-    cover: string | null;
-    digest: string | null;
-    last_update: number | null;
-};
 
 export function getRadioById(id: number): Radio | undefined {
     return getById<Radio>(TABLE, id);

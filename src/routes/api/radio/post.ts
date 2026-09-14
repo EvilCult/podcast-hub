@@ -1,8 +1,8 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
 import { XMLParser } from 'fast-xml-parser';
-import { createRadio } from '$lib/server/radio';
-import { createEpisode } from '$lib/server/episode';
+import { createRadio } from '$lib/server/repos/radio';
+import { createEpisode } from '$lib/server/repos/episode';
 
 export const post: RequestHandler = async ({ request }) => {
     const data = await request.json();
