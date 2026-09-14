@@ -9,7 +9,6 @@
         AdjustmentsVerticalOutline,
         UserCircleSolid,
         PlusOutline,
-        HomeOutline,
         AppleSolid
     } from 'flowbite-svelte-icons';
 
@@ -19,7 +18,7 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 <Navbar class="dark:bg-gray-800">
     <NavBrand href="/">
-        <AppleSolid class="mr-2 h-8 w-8 shrink-0 text-gray-100" />
+        <AppleSolid class="mr-2 h-7 w-7 shrink-0 text-gray-100" />
         <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white"
             >PodCast Streaming Proxy</span
         >

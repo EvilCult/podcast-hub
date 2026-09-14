@@ -5,6 +5,6 @@ import { getRadios } from '$lib/server/repos/radio';
 export function get() {
     const radios = getRadios();
     return json({
-        message: radios
+        data: radios
     });
 }
