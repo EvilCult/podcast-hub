@@ -77,10 +77,12 @@ export const post: RequestHandler = async ({ request }) => {
             'media:content': {
                 '@_url': string;
             };
+            'itunes:duration': string | null;
             pubDate: string;
         }) => ({
             title: item.title,
             url: item['media:content']?.['@_url'],
+            duration: item['itunes:duration'] ? Number(item['itunes:duration']) : null,
             pubDate: Math.floor(new Date(item.pubDate).getTime() / 1000)
         })
     );
@@ -100,6 +102,7 @@ export const post: RequestHandler = async ({ request }) => {
             title: episode.title,
             url: episode.url,
             radio_id: radioId,
+            duration: episode.duration,
             pub_date: episode.pubDate
         });
     }

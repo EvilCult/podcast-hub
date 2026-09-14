@@ -11,17 +11,32 @@ export function getEpisodeById(id: number): EpisodeItem | undefined {
     }
 
     return {
+        id: row.id,
         title: row.title,
         url: row.url,
+        duration: row.duration,
         pub_date: row.pub_date
     };
+}
+
+export function getEpisodeByRadioId(radio_id: number): EpisodeItem[] | undefined {
+    const rows = fetchAll<EpisodeData>(TABLE, 'radio_id = ? AND is_del = 0', [radio_id]);
+    return rows.map((row: EpisodeItem) => ({
+        id: row.id,
+        title: row.title,
+        url: row.url,
+        duration: row.duration,
+        pub_date: row.pub_date
+    }));
 }
 
 export function getEpisodes(): EpisodeItem[] {
     const rows = fetchAll<EpisodeData>(TABLE, 'is_del = 0');
     return rows.map((row: EpisodeItem) => ({
+        id: row.id,
         title: row.title,
         url: row.url,
+        duration: row.duration,
         pub_date: row.pub_date
     }));
 }
