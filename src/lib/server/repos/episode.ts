@@ -13,6 +13,7 @@ export function getEpisodeById(id: number): EpisodeItem | undefined {
     return {
         id: row.id,
         title: row.title,
+        digest: row.digest,
         url: row.url,
         duration: row.duration,
         pub_date: row.pub_date
@@ -24,6 +25,7 @@ export function getEpisodeByRadioId(radio_id: number): EpisodeItem[] | undefined
     return rows.map((row: EpisodeItem) => ({
         id: row.id,
         title: row.title,
+        digest: row.digest,
         url: row.url,
         duration: row.duration,
         pub_date: row.pub_date
@@ -35,6 +37,7 @@ export function getEpisodes(): EpisodeItem[] {
     return rows.map((row: EpisodeItem) => ({
         id: row.id,
         title: row.title,
+        digest: row.digest,
         url: row.url,
         duration: row.duration,
         pub_date: row.pub_date

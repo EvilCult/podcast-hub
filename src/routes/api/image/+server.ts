@@ -18,9 +18,9 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
         error(400, 'Invalid url');
     }
 
-    if (imageUrl.protocol !== 'https:' || imageUrl.hostname !== ALLOWED_HOST) {
-        error(403, 'Forbidden');
-    }
+    // if (imageUrl.protocol !== 'https:' || imageUrl.hostname !== ALLOWED_HOST) {
+    //     error(403, 'Forbidden');
+    // }
 
     const response = await fetch(imageUrl);
 

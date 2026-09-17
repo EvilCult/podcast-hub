@@ -1,10 +1,14 @@
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params, fetch }) => {
-    const res = await fetch(`/api/radio/${params.id}`);
-    const result = await res.json();
+    const radioRes = await fetch(`/api/radio/${params.id}`);
+    const radioRst = await radioRes.json();
+
+    const episodeRes = await fetch(`/api/radio/${params.id}/episodes`);
+    const episodeRst = await episodeRes.json();
 
     return {
-        radio: result.data
+        radio: radioRst.data,
+        episodes: episodeRst.data
     };
 };

@@ -12,13 +12,15 @@ export function GET({ params }: RequestEvent) {
     if (!rows) {
         return json({ error: 'Radio not found' }, { status: 404 });
     }
-    return json(
-        rows.map((row) => ({
-            id: row.id,
-            title: row.title,
-            url: row.url,
-            duration: row.duration,
-            pub_date: row.pub_date
-        }))
-    );
+    const eps = rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        digest: row.digest,
+        url: row.url,
+        duration: row.duration,
+        pub_date: row.pub_date
+    }));
+    return json({
+        data: eps
+    });
 }
