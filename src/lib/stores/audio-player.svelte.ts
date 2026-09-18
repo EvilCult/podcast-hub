@@ -5,6 +5,7 @@ export type PlayerEpisode = {
     title: string;
     url: string | null;
     duration: number | null;
+    pos: number | null;
 };
 
 export type PlayerRadio = {

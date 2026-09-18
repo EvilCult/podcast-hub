@@ -21,6 +21,12 @@
             ? `${hours}:${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`
             : `${minutes}:${String(rest).padStart(2, '0')}`;
     }
+
+    function isPlayed(episode: PlayerEpisode) {
+        if (!episode.pos || !episode.duration) return false;
+
+        return episode.pos >= episode.duration - 30;
+    }
 </script>
 
 <div class="p-6">
@@ -64,13 +70,28 @@
                     >
                         {episode.title}
                     </h3>
+
                     <p class="mt-1 text-sm break-all text-gray-500 dark:text-gray-400">
                         {digest.length > 200 ? `${digest.slice(0, 200)}...` : digest}
                     </p>
                 </div>
-                <span class="shrink-0 text-sm text-gray-500"
-                    >{formatDuration(episode.duration)}</span
-                >
+
+                <div class="flex shrink-0 flex-col items-end text-sm">
+                    {#if isPlayed(episode)}
+                        <span class="text-primary-600 dark:text-primary-400"> 已听 </span>
+                    {:else if episode.pos && episode.pos > 0}
+                        <span class="text-primary-600 dark:text-primary-400">
+                            {formatDuration(episode.pos)}
+                        </span>
+                        <span class="text-gray-400">
+                            / {formatDuration(episode.duration)}
+                        </span>
+                    {:else}
+                        <span class="text-gray-500 dark:text-gray-400">
+                            {formatDuration(episode.duration)}
+                        </span>
+                    {/if}
+                </div>
             </div>
         </button>
     {/each}
