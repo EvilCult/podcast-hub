@@ -1,10 +1,42 @@
 <script lang="ts">
-    import { Alert } from 'flowbite-svelte';
+    import { resolve } from '$app/paths';
+    import AddPodcast from './AddPodcast.svelte';
+
+    import { invalidateAll } from '$app/navigation';
+    import { Card, SpeedDial, SpeedDialTrigger, SpeedDialButton } from 'flowbite-svelte';
+    import { CloudArrowUpSolid, BookmarkSolid } from 'flowbite-svelte-icons';
+
+    let { data } = $props();
+    const radios = $derived(data.radios);
+    let popupModal = $state(false);
+    let podcast_url = $state('');
 </script>
 
-<div class="p-8">
-    <Alert>
-        <span class="font-medium">Info alert!</span>
-        Change a few things up and try submitting again.
-    </Alert>
+<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-6">
+    {#each radios as radio (radio.id)}
+        <div class="space-y-4">
+            <Card
+                img={`/api/image?url=${encodeURIComponent(radio.cover)}`}
+                href={resolve(`/radio/${radio.id}`)}
+            >
+                <div class="m-2 mt-3">
+                    <h5
+                        class="mb-1 text-center text-base font-bold tracking-tight text-gray-900 dark:text-white"
+                    >
+                        {radio.title.length > 15 ? `${radio.title.slice(0, 15)}...` : radio.title}
+                    </h5>
+                </div>
+            </Card>
+        </div>
+    {/each}
 </div>
+<SpeedDialTrigger class="fixed inset-e-6 bottom-30 z-60 md:bottom-26" />
+<SpeedDial>
+    <SpeedDialButton name="添加podcast" onclick={() => (popupModal = true)}>
+        <CloudArrowUpSolid class="h-6 w-6" />
+    </SpeedDialButton>
+    <SpeedDialButton name="历史记录">
+        <BookmarkSolid class="h-6 w-6" />
+    </SpeedDialButton>
+</SpeedDial>
+<AddPodcast bind:popupModal bind:podcast_url {invalidateAll} />

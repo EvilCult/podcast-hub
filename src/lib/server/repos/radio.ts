@@ -1,4 +1,4 @@
-import { fetchAll, getById, insert, updateById, rmById } from '$lib/server/repos/db';
+import { fetchAll, getById, insert, updateById, deleteById } from '$lib/server/repos/db';
 import type { RadioData, RadioItem, RadioCreate } from '$lib/server/models/radio_model';
 
 const TABLE = 'radios';
@@ -42,5 +42,5 @@ export function updateRadio(id: number, data: Partial<Omit<RadioData, 'id'>>): b
 }
 
 export function deleteRadio(id: number): boolean {
-    return rmById(TABLE, id);
+    return deleteById(TABLE, id);
 }
