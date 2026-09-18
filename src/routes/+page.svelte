@@ -6,7 +6,7 @@
     const radios = $derived(data.radios);
 </script>
 
-<div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 p-6">
+<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-6">
     {#each radios as radio (radio.id)}
         <div class="space-y-4">
             <Card

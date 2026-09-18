@@ -9,14 +9,5 @@ declare global {
         // interface Platform {}
     }
 }
-declare module 'aplayer' {
-    const APlayer: any;
-    export default APlayer;
-}
-
-declare module 'APlayer' {
-    const APlayer: any;
-    export default APlayer;
-}
 
 export {};
