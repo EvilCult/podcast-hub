@@ -1,4 +1,4 @@
-import { upsert } from '$lib/server/repos/db';
+import { upsert, fetchOne } from '$lib/server/repos/db';
 import type { HistoryUpdate } from '$lib/server/models/episode_model';
 
 const TABLE = 'histories';
@@ -11,4 +11,8 @@ export function updateHistory(data: HistoryUpdate): boolean {
         },
         ['eid', 'uid']
     );
+}
+
+export function getHistoryById(id: number) {
+    return fetchOne(TABLE, `eid = ?`, [id]);
 }
