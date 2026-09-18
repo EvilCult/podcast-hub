@@ -5,7 +5,7 @@ import { getEpisodeListByRadioId } from '$lib/server/repos/episode';
 export function GET({ params, url }: RequestEvent) {
     const radio_id = Number(params.id);
     const page = Number(url.searchParams.get('p') ?? 1);
-    const pageSize = Number(url.searchParams.get('ps') ?? 20);
+    const pageSize = Number(url.searchParams.get('ps') ?? 10);
     if (Number.isNaN(radio_id) || Number.isNaN(page) || Number.isNaN(pageSize)) {
         return json({ error: 'Invalid url params' }, { status: 400 });
     }

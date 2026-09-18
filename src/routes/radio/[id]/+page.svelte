@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { Button, Avatar } from 'flowbite-svelte';
+    import { Button, Avatar, Spinner } from 'flowbite-svelte';
     import { PlaySolid } from 'flowbite-svelte-icons';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
 
     let { data } = $props();
     const radio = $derived(data.radio as PlayerRadio);
-    const episodes = $derived(data.episodes as (PlayerEpisode & { digest: string | null })[]);
+    let episodes = $derived(data.episodes as (PlayerEpisode & { digest: string | null })[]);
 
     function play(item: PlayerEpisode) {
         void playEpisode(item, radio);
@@ -27,6 +27,56 @@
 
         return episode.pos >= episode.duration - 30;
     }
+
+    let page = $state(1);
+    let loading = $state(false);
+    let hasMore = $state(true);
+
+    async function loadMore() {
+        if (loading || !hasMore) return;
+
+        loading = true;
+
+        const nextPage = page + 1;
+        const res = await fetch(`/api/radio/${data.radio.id}/episodes?p=${nextPage}`);
+
+        if (!res.ok) {
+            loading = false;
+            return;
+        }
+
+        const result = await res.json();
+
+        if (result.data.length === 0) {
+            hasMore = false;
+        } else {
+            episodes = [...episodes, ...result.data];
+            page = nextPage;
+        }
+
+        loading = false;
+    }
+
+    $effect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMore();
+                }
+            },
+
+            {
+                rootMargin: '200px'
+            }
+        );
+
+        const target = document.querySelector('#load-more');
+
+        if (target) {
+            observer.observe(target);
+        }
+        return () => observer.disconnect();
+    });
 </script>
 
 <div class="p-6">
@@ -95,4 +145,10 @@
             </div>
         </button>
     {/each}
+    <div id="load-more" class=""></div>
+    {#if loading}
+        <div class="py-6 text-center text-sm text-gray-500">
+            <Spinner type="dots" color="primary" />
+        </div>
+    {/if}
 </div>
