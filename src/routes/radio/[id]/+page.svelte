@@ -1,7 +1,6 @@
 <script lang="ts">
     import { Button, Avatar } from 'flowbite-svelte';
     import { PlaySolid } from 'flowbite-svelte-icons';
-    import AudioPlayer from '$lib/components/audio/AudioPlayer.svelte';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
 
@@ -47,8 +46,6 @@
         </div>
     </div>
 </div>
-
-<AudioPlayer />
 
 <div
     class="divide-y divide-gray-200 bg-gray-100 px-4 sm:px-8 md:px-12 lg:px-20 dark:divide-gray-800 dark:bg-gray-700"
