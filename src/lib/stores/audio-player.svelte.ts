@@ -182,7 +182,7 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
     player.currentTime = 0;
     player.duration = episode.duration ?? 0;
 
-    const proxiedUrl = `/api/audio?url=${encodeURIComponent(episode.url)}`;
+    const proxiedUrl = episode.url;
 
     audio.src = proxiedUrl;
     audio.playbackRate = player.playbackRate;

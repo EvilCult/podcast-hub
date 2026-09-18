@@ -1,3 +1,4 @@
+import { PUBLIC_API_URL } from '$env/static/public';
 import { json, type RequestEvent } from '@sveltejs/kit';
 
 import { getEpisodeListByRadioId } from '$lib/server/repos/episode';
@@ -18,7 +19,7 @@ export function GET({ params, url }: RequestEvent) {
         id: row.id,
         title: row.title,
         digest: row.digest,
-        url: row.url,
+        url: row.url ? `${PUBLIC_API_URL}/api/audio?url=${encodeURIComponent(row.url)}` : null,
         duration: row.duration,
         pub_date: row.pub_date,
         pos: row.pos

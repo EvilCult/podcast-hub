@@ -51,7 +51,7 @@ export function updateEpisode(id: number, data: Partial<Omit<EpisodeData, 'id'>>
 }
 
 export function deleteEpisode(id: number): boolean {
-    return rmById(TABLE, id);
+    return deleteById(TABLE, id);
 }
 
 export function deleteEpisodeByRadioId(radio_id: number): boolean {
