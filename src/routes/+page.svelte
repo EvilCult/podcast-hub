@@ -1,15 +1,15 @@
 <script lang="ts">
     import { resolve } from '$app/paths';
+    import AddPodcast from './AddPodcast.svelte';
+
+    import { invalidateAll } from '$app/navigation';
     import { Card, SpeedDial, SpeedDialTrigger, SpeedDialButton } from 'flowbite-svelte';
-    import {
-        ShareNodesSolid,
-        PrinterSolid,
-        DownloadSolid,
-        FileCopySolid
-    } from 'flowbite-svelte-icons';
+    import { CloudArrowUpSolid, BookmarkSolid } from 'flowbite-svelte-icons';
 
     let { data } = $props();
     const radios = $derived(data.radios);
+    let popupModal = $state(false);
+    let podcast_url = $state('');
 </script>
 
 <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-6">
@@ -23,7 +23,7 @@
                     <h5
                         class="mb-1 text-center text-base font-bold tracking-tight text-gray-900 dark:text-white"
                     >
-                        {radio.title}
+                        {radio.title.length > 15 ? `${radio.title.slice(0, 15)}...` : radio.title}
                     </h5>
                 </div>
             </Card>
@@ -32,16 +32,11 @@
 </div>
 <SpeedDialTrigger class="fixed inset-e-6 bottom-30 z-60 md:bottom-26" />
 <SpeedDial>
-    <SpeedDialButton name="Share">
-        <ShareNodesSolid class="h-6 w-6" />
+    <SpeedDialButton name="添加podcast" onclick={() => (popupModal = true)}>
+        <CloudArrowUpSolid class="h-6 w-6" />
     </SpeedDialButton>
-    <SpeedDialButton name="Print">
-        <PrinterSolid class="h-6 w-6" />
-    </SpeedDialButton>
-    <SpeedDialButton name="Download">
-        <DownloadSolid class="h-6 w-6" />
-    </SpeedDialButton>
-    <SpeedDialButton name="Copy">
-        <FileCopySolid class="h-6 w-6" />
+    <SpeedDialButton name="历史记录">
+        <BookmarkSolid class="h-6 w-6" />
     </SpeedDialButton>
 </SpeedDial>
+<AddPodcast bind:popupModal bind:podcast_url {invalidateAll} />

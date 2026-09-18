@@ -1,8 +1,9 @@
 <script lang="ts">
     import { Button, Avatar, Spinner } from 'flowbite-svelte';
-    import { PlaySolid } from 'flowbite-svelte-icons';
+    import { PlaySolid, TrashBinOutline } from 'flowbite-svelte-icons';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
+    import DelPodcast from './DelPodcast.svelte';
 
     let { data } = $props();
     const radio = $derived(data.radio as PlayerRadio);
@@ -38,7 +39,7 @@
         loading = true;
 
         const nextPage = page + 1;
-        const res = await fetch(`/api/radio/${data.radio.id}/episodes?p=${nextPage}`);
+        const res = await fetch(`/api/radio/${radio.id}/episodes?p=${nextPage}`);
 
         if (!res.ok) {
             loading = false;
@@ -77,6 +78,8 @@
         }
         return () => observer.disconnect();
     });
+
+    let popupModal = $state(false);
 </script>
 
 <div class="p-6">
@@ -87,17 +90,25 @@
             class="size-30 sm:size-30 md:size-48"
         />
         <div class="mt-4 space-y-1 font-medium dark:text-white">
-            <div class="text-2xl">{radio.title}</div>
+            <div class="text-2xl">
+                {radio.title}
+            </div>
             <div
                 class="mt-6 line-clamp-2 text-sm text-gray-500 sm:line-clamp-none dark:text-gray-400"
             >
                 {data.radio.digest}
             </div>
             <div class="mt-2 text-xs text-gray-400">最后更新: {data.radio.last_update}</div>
-            <div class="mt-4">
+            <div class="mt-4 flex items-center gap-2">
                 <Button pill onclick={() => episodes[0] && play(episodes[0])}
                     >Play <PlaySolid class="ml-2" /></Button
                 >
+                <Button pill outline={true} class="size-8 p-2!">
+                    <TrashBinOutline
+                        class="size-5 text-primary-700"
+                        onclick={() => (popupModal = true)}
+                    />
+                </Button>
             </div>
         </div>
     </div>
@@ -152,3 +163,4 @@
         </div>
     {/if}
 </div>
+<DelPodcast bind:popupModal radio_id={radio.id} />

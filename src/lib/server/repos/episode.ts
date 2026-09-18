@@ -1,4 +1,4 @@
-import { fetchQuery, insert, updateById, rmById } from '$lib/server/repos/db';
+import { fetchQuery, insert, updateById, deleteById } from '$lib/server/repos/db';
 import type { EpisodeData, EpisodeItem, EpisodeCreate } from '$lib/server/models/episode_model';
 
 const TABLE = 'episodes';
@@ -52,4 +52,8 @@ export function updateEpisode(id: number, data: Partial<Omit<EpisodeData, 'id'>>
 
 export function deleteEpisode(id: number): boolean {
     return rmById(TABLE, id);
+}
+
+export function deleteEpisodeByRadioId(radio_id: number): boolean {
+    return deleteById(TABLE, radio_id, 'radio_id');
 }

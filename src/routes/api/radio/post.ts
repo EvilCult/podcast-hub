@@ -70,7 +70,7 @@ export const post: RequestHandler = async ({ request }) => {
     // 6. radios 表需要的数据
     const radio = {
         title: channel.title,
-        description: channel.description,
+        description: rmHtml(channel.description),
         image: channel['itunes:image']['@_href'],
         url: feedUrl
     };
