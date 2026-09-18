@@ -87,6 +87,39 @@ export function updateById(
     return result.changes > 0;
 }
 
+export function upsert(table: string, data: Record<string, unknown>, key: string[]): boolean {
+    if (Object.keys(data).length === 0) {
+        return false;
+    }
+
+    const columns = Object.keys(data).join(', ');
+    const placeholders = Object.keys(data)
+        .map(() => '?')
+        .join(', ');
+
+    const insertSql = `
+		INSERT INTO ${table} (${columns})
+		VALUES (${placeholders})
+	`;
+
+    const assignments = Object.keys(data)
+        .filter((column) => !key.includes(column))
+        .map((column) => `${column} = excluded.${column}`)
+        .join(', ');
+
+    const updateSql = `
+        ON CONFLICT (${key.join(', ')})
+        DO UPDATE SET
+		${assignments}
+	`;
+
+    const sql = insertSql + updateSql;
+
+    const result = db.prepare(sql).run(...Object.values(data));
+
+    return result.changes > 0;
+}
+
 export function deleteById(table: string, itemId: number | string, idCol = 'id'): boolean {
     const sql = `
 		DELETE FROM ${table}

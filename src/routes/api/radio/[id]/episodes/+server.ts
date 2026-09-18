@@ -18,7 +18,8 @@ export function GET({ params }: RequestEvent) {
         digest: row.digest,
         url: row.url,
         duration: row.duration,
-        pub_date: row.pub_date
+        pub_date: row.pub_date,
+        pos: row.pos
     }));
     return json({
         data: eps

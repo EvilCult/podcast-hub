@@ -50,18 +50,6 @@ export function attachAudio(element: HTMLAudioElement) {
     audio.addEventListener('error', () => {
         player.loading = false;
         player.error = '音频加载失败，请检查音频地址或跨域设置';
-        // const error = audio.error;
-        // player.loading = false;
-        // player.error = error
-        //     ? `音频加载失败 (${error.code}): ${error.message || '未知错误'}`
-        //     : '音频加载失败';
-        // console.error('Audio error:', {
-        //     code: error?.code,
-        //     message: error?.message,
-        //     src: audio.currentSrc,
-        //     networkState: audio.networkState,
-        //     readyState: audio.readyState
-        // });
     });
     audio.addEventListener('ended', () => {
         player.playing = false;
