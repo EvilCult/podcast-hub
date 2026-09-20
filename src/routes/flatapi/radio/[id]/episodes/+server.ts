@@ -15,13 +15,17 @@ export function GET({ params, url }: RequestEvent) {
     if (!rows) {
         return json({ error: 'Radio not found' }, { status: 404 });
     }
-    const eps = rows.map((row) => ({
-        title: row.title,
-        url: row.url ? `${PUBLIC_API_URL}/transcode?url=${encodeURIComponent(row.url)}` : null,
-        duration: row.duration,
-        pos: row.pos
-    }));
-    return json({
-        data: eps
-    });
+
+    return json(
+        rows.map((row) => {
+            return {
+                title: row.title,
+                url: row.url
+                    ? `${PUBLIC_API_URL}/transcode?url=${encodeURIComponent(row.url)}`
+                    : null,
+                duration: row.duration,
+                pos: row.pos
+            };
+        })
+    );
 }
