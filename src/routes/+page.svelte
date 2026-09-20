@@ -3,8 +3,8 @@
     import AddPodcast from './AddPodcast.svelte';
 
     import { invalidateAll } from '$app/navigation';
-    import { Card, SpeedDial, SpeedDialTrigger, SpeedDialButton } from 'flowbite-svelte';
-    import { CloudArrowUpSolid, BookmarkSolid } from 'flowbite-svelte-icons';
+    import { Card, Button } from 'flowbite-svelte';
+    import { PlusOutline } from 'flowbite-svelte-icons';
 
     let { data } = $props();
     const radios = $derived(data.radios);
@@ -30,13 +30,9 @@
         </div>
     {/each}
 </div>
-<SpeedDialTrigger class="fixed inset-e-6 bottom-30 z-60 md:bottom-26" />
-<SpeedDial>
-    <SpeedDialButton name="添加podcast" onclick={() => (popupModal = true)}>
-        <CloudArrowUpSolid class="h-6 w-6" />
-    </SpeedDialButton>
-    <SpeedDialButton name="历史记录">
-        <BookmarkSolid class="h-6 w-6" />
-    </SpeedDialButton>
-</SpeedDial>
+<Button
+    pill={true}
+    class="fixed inset-e-6 bottom-30 z-60 p-2! md:bottom-26"
+    onclick={() => (popupModal = true)}><PlusOutline class="h-6 w-6" /></Button
+>
 <AddPodcast bind:popupModal bind:podcast_url {invalidateAll} />

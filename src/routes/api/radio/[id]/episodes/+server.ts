@@ -18,7 +18,7 @@ export function GET({ params, url }: RequestEvent) {
         id: row.id,
         title: row.title,
         digest: row.digest,
-        url: row.url,
+        url: row.url ?? null,
         duration: row.duration,
         pub_date: row.pub_date,
         pos: row.pos
