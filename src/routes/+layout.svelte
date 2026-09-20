@@ -19,7 +19,9 @@
     </NavBrand>
     <NavHamburger />
     <NavUl>
-        <!-- <NavLi href="/">Home</NavLi> -->
+        <NavLi href="/">Home</NavLi>
+        <NavLi href="/">History</NavLi>
+        <NavLi href="/">Fav</NavLi>
     </NavUl>
 </Navbar>
 <main class="flex-1">
