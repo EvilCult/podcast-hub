@@ -34,14 +34,10 @@ export async function GET({ url, request }: RequestEvent) {
 
     const rangeHeader = request.headers.get('range');
     let startByte = 0;
-    let endByte = totalBytes > 0 ? totalBytes - 1 : 0;
 
     if (rangeHeader && totalBytes > 0) {
         const parts = rangeHeader.replace(/bytes=/, '').split('-');
         startByte = parseInt(parts[0], 10) || 0;
-        if (parts[1]) {
-            endByte = parseInt(parts[1], 10);
-        }
     }
 
     const startSeconds = (startByte / BYTES_PER_SECOND).toFixed(2);
@@ -75,9 +71,9 @@ export async function GET({ url, request }: RequestEvent) {
 
     const ffmpegProcess = spawn('ffmpeg', ffmpegArgs);
 
-    ffmpegProcess.stderr.on('data', (data) => {
-        // console.log(`ffmpeg: ${data}`);
-    });
+    // ffmpegProcess.stderr.on('data', (data) => {
+    //     console.log(`ffmpeg: ${data}`);
+    // });
 
     ffmpegProcess.on('error', (err) => {
         console.error('Failed to start ffmpeg process:', err);
@@ -92,6 +88,7 @@ export async function GET({ url, request }: RequestEvent) {
                     try {
                         controller.enqueue(chunk);
                     } catch (e) {
+                        console.log(e);
                         isControllerClosed = true;
                     }
                 }
@@ -102,7 +99,9 @@ export async function GET({ url, request }: RequestEvent) {
                     isControllerClosed = true;
                     try {
                         controller.close();
-                    } catch (e) {}
+                    } catch (e) {
+                        console.log(e);
+                    }
                 }
             });
 
@@ -111,7 +110,9 @@ export async function GET({ url, request }: RequestEvent) {
                     isControllerClosed = true;
                     try {
                         controller.error(err);
-                    } catch (e) {}
+                    } catch (e) {
+                        console.log(e);
+                    }
                 }
             });
         },
