@@ -11,7 +11,7 @@ export const post: RequestHandler = async ({ params, request }) => {
     const data = await request.json();
     const position = data.pos as number;
 
-    const rst = await updateHistory({
+    const rst = updateHistory({
         eid: id,
         pos: position,
         play_time: Math.floor(Date.now() / 1000),

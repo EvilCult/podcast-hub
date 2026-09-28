@@ -1,4 +1,5 @@
-import type { RequestHandler } from './$types';
+import { type RequestHandler } from '@sveltejs/kit';
+
 import { runRefresh } from '$lib/server/refresh';
 
 export const get: RequestHandler = async ({ url }) => {
