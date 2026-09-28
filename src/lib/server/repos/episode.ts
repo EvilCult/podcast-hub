@@ -57,3 +57,17 @@ export function deleteEpisode(id: number): boolean {
 export function deleteEpisodeByRadioId(radio_id: number): boolean {
     return deleteById(TABLE, radio_id, 'radio_id');
 }
+
+/**
+ * Existing episode identity keys for a radio, for refresh dedup.
+ * An episode is considered already stored when its enclosure URL matches,
+ * or (when the URL is missing) when title + pub_date match.
+ */
+export function getEpisodeKeys(
+    radio_id: number
+): { url: string | null; title: string; pub_date: number | null }[] {
+    return fetchQuery<{ url: string | null; title: string; pub_date: number | null }>(
+        `SELECT url, title, pub_date FROM ${TABLE} WHERE radio_id = ? AND is_del = 0`,
+        [radio_id]
+    );
+}
