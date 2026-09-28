@@ -30,6 +30,14 @@ export function getRadios(): RadioItem[] {
     }));
 }
 
+/** Radios with their feed URLs, for the refresh job. */
+export function getRefreshTargets(): { id: number; title: string; feed: string }[] {
+    const rows = fetchAll<RadioData>(TABLE, 'is_del = 0');
+    return rows
+        .filter((row) => row.feed)
+        .map((row) => ({ id: row.id, title: row.title, feed: row.feed }));
+}
+
 export function createRadio(data: RadioCreate): number {
     return insert(TABLE, {
         ...data,
