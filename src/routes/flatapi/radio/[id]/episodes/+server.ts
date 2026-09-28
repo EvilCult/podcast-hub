@@ -20,6 +20,7 @@ export function GET({ params, url }: RequestEvent) {
 	return json(
 		rows.map((row) => {
 			return {
+				id: row.id,
 				title: row.title,
 				// Device profile (22050 Hz / 48 kbps / mono); the /api/transcode
 				// defaults stay untouched for the web player.
