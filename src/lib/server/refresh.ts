@@ -64,12 +64,8 @@ async function refreshOne(
     return result;
 }
 
-export async function runRefresh(radioId?: number) {
-    const targets = getRefreshTargets().filter((t) => !radioId || t.id === radioId);
-
-    if (radioId && targets.length === 0) {
-        return json({ error: `Radio ${radioId} not found` }, { status: 404 });
-    }
+export async function runRefresh() {
+    const targets = getRefreshTargets();
 
     const refreshed: RadioResult[] = [];
 
