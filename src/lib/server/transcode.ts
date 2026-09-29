@@ -27,8 +27,9 @@ export const DEFAULT_PROFILE: TranscodeProfile = {
 };
 
 /** Device (flatapi) profile: ESP32-C3 friendly. */
+/* Note: 22050Hz 触发 MPEG-2 Audio, 解码器内存不足; 改用 32000Hz (MPEG-1)。 */
 export const DEVICE_PROFILE: TranscodeProfile = {
-	sr: 22050,
+	sr: 32000,
 	br: 48,
 	ch: 1,
 	bytesPerSecond: 6000
