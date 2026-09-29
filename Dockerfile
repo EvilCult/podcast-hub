@@ -2,17 +2,20 @@ FROM node:22-slim
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    cron \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
 RUN npm run build
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    cron \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
 
 COPY config/crontab /etc/cron.d/my-cron-task
 COPY config/entrypoint.sh /app/entrypoint.sh
