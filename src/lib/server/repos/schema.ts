@@ -33,4 +33,12 @@ CREATE TABLE IF NOT EXISTS histories (
 );
 CREATE INDEX IF NOT EXISTS idx_histories_eid ON histories (eid);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_histories_uid_eid ON histories (uid, eid);
+
+CREATE TABLE IF NOT EXISTS fav (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    eid INTEGER,
+    uid INTEGER DEFAULT 0,
+    created_at INTEGER
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_fav_uid_eid ON fav (uid, eid);
 `;
