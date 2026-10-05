@@ -9,6 +9,7 @@ RUN apt-get update \
     g++ \
     cron \
     ffmpeg \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
@@ -21,7 +22,7 @@ COPY . .
 ARG PUBLIC_API_URL
 ARG PUBLIC_HOST
 RUN if [ -n "$PUBLIC_API_URL" ]; then \
-        printf 'PUBLIC_API_URL=%s\nPUBLIC_HOST=%s\n' "$PUBLIC_API_URL" "$PUBLIC_HOST" > .env; \
+    printf 'PUBLIC_API_URL=%s\nPUBLIC_HOST=%s\n' "$PUBLIC_API_URL" "$PUBLIC_HOST" > .env; \
     fi
 RUN npm run build
 
