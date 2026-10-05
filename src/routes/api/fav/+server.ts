@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
 import { getById } from '$lib/server/repos/db';
-import { addFav, removeFav } from '$lib/server/repos/fav';
+import { addFav, getFavEpisodes, removeFav } from '$lib/server/repos/fav';
 
 async function parseEpisodeId(request: Request): Promise<number | undefined> {
     try {
@@ -15,6 +15,31 @@ async function parseEpisodeId(request: Request): Promise<number | undefined> {
         return undefined;
     }
 }
+
+// GET /api/fav?p=1&ps=10 -> paginated favorite episodes, newest first
+export const GET: RequestHandler = async ({ url }) => {
+    const page = Number(url.searchParams.get('p') ?? 1);
+    const pageSize = Number(url.searchParams.get('ps') ?? 10);
+    if (!Number.isInteger(page) || !Number.isInteger(pageSize) || page < 1 || pageSize < 1) {
+        return json({ error: 'Invalid url params' }, { status: 400 });
+    }
+    const rows = getFavEpisodes(page, pageSize);
+    return json({
+        data: rows.map((row) => ({
+            id: row.id,
+            title: row.title,
+            digest: row.digest,
+            url: row.url ?? null,
+            duration: row.duration,
+            pub_date: row.pub_date,
+            pos: row.pos,
+            radio_id: row.radio_id,
+            radio_title: row.radio_title,
+            fav_time: row.fav_time,
+            is_fav: true
+        }))
+    });
+};
 
 function invalidEpisode() {
     return json({ error: 'Invalid or missing episode id' }, { status: 400 });

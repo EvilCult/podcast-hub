@@ -21,7 +21,8 @@ export function GET({ params, url }: RequestEvent) {
         url: row.url ?? null,
         duration: row.duration,
         pub_date: row.pub_date,
-        pos: row.pos
+        pos: row.pos,
+        is_fav: row.is_fav
     }));
     return json({
         data: eps
