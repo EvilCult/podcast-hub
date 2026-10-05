@@ -13,8 +13,9 @@
     "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",
     "db:init": "node scripts/init-db.mjs",
-    "predev": "npm run db:init",
-    "prebuild": "npm run db:init"
+    "predev": "npm run env:ensure && npm run db:init",
+    "prebuild": "npm run env:ensure && npm run db:init",
+    "env:ensure": "node scripts/ensure-env.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
