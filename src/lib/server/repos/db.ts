@@ -1,9 +1,16 @@
 import Database from 'better-sqlite3';
+import fs from 'node:fs';
 import path from 'node:path';
+
+import { SCHEMA_SQL } from './schema';
 
 const DB_PATH = path.resolve('data/database.db');
 
+// Ensure the database exists with the full schema on startup.
+// Idempotent: safe to run on every launch (dev, preview, node build, docker).
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 const db = new Database(DB_PATH);
+db.exec(SCHEMA_SQL);
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
