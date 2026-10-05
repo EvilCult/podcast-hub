@@ -3,11 +3,12 @@ import type { EpisodeData, EpisodeItem, EpisodeCreate } from '$lib/server/models
 
 const TABLE = 'episodes';
 const HISTORY_TABLE = 'histories';
+const FAV_TABLE = 'fav';
 
 export function getEpisodeByRadioId(radio_id: number): EpisodeItem[] | undefined {
-    const sql = `SELECT ${TABLE}.*, ${HISTORY_TABLE}.pos, ${HISTORY_TABLE}.play_time FROM ${TABLE} LEFT JOIN ${HISTORY_TABLE} ON ${TABLE}.id = ${HISTORY_TABLE}.eid WHERE radio_id = ? AND is_del = 0`;
-    const rows = fetchQuery<EpisodeData>(sql, [radio_id]);
-    return rows.map((row: EpisodeItem) => ({
+    const sql = `SELECT ${TABLE}.*, ${HISTORY_TABLE}.pos, ${HISTORY_TABLE}.play_time, ${FAV_TABLE}.eid AS fav_eid FROM ${TABLE} LEFT JOIN ${HISTORY_TABLE} ON ${TABLE}.id = ${HISTORY_TABLE}.eid LEFT JOIN ${FAV_TABLE} ON ${FAV_TABLE}.eid = ${TABLE}.id AND ${FAV_TABLE}.uid = 0 WHERE radio_id = ? AND is_del = 0`;
+    const rows = fetchQuery<EpisodeData & { fav_eid: number | null }>(sql, [radio_id]);
+    return rows.map((row: EpisodeData & { fav_eid: number | null }) => ({
         id: row.id,
         title: row.title,
         digest: row.digest,
@@ -15,7 +16,8 @@ export function getEpisodeByRadioId(radio_id: number): EpisodeItem[] | undefined
         duration: row.duration,
         pub_date: row.pub_date,
         pos: row.pos,
-        play_time: row.play_time
+        play_time: row.play_time,
+        is_fav: row.fav_eid != null
     }));
 }
 
@@ -25,9 +27,9 @@ export function getEpisodeListByRadioId(
     pageSize: number
 ): EpisodeItem[] | undefined {
     const offset = (page - 1) * pageSize;
-    const sql = `SELECT ${TABLE}.*, ${HISTORY_TABLE}.pos, ${HISTORY_TABLE}.play_time FROM ${TABLE} LEFT JOIN ${HISTORY_TABLE} ON ${TABLE}.id = ${HISTORY_TABLE}.eid WHERE radio_id = ? AND is_del = 0 ORDER BY pub_date DESC LIMIT ?, ?`;
-    const rows = fetchQuery<EpisodeData>(sql, [radio_id, offset, pageSize]);
-    return rows.map((row: EpisodeItem) => ({
+    const sql = `SELECT ${TABLE}.*, ${HISTORY_TABLE}.pos, ${HISTORY_TABLE}.play_time, ${FAV_TABLE}.eid AS fav_eid FROM ${TABLE} LEFT JOIN ${HISTORY_TABLE} ON ${TABLE}.id = ${HISTORY_TABLE}.eid LEFT JOIN ${FAV_TABLE} ON ${FAV_TABLE}.eid = ${TABLE}.id AND ${FAV_TABLE}.uid = 0 WHERE radio_id = ? AND is_del = 0 ORDER BY pub_date DESC LIMIT ?, ?`;
+    const rows = fetchQuery<EpisodeData & { fav_eid: number | null }>(sql, [radio_id, offset, pageSize]);
+    return rows.map((row: EpisodeData & { fav_eid: number | null }) => ({
         id: row.id,
         title: row.title,
         digest: row.digest,
@@ -35,7 +37,8 @@ export function getEpisodeListByRadioId(
         duration: row.duration,
         pub_date: row.pub_date,
         pos: row.pos,
-        play_time: row.play_time
+        play_time: row.play_time,
+        is_fav: row.fav_eid != null
     }));
 }
 

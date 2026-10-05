@@ -20,11 +20,12 @@
     <NavHamburger />
     <NavUl>
         <NavLi href="/">Home</NavLi>
-        <NavLi href="/">History</NavLi>
-        <NavLi href="/">Fav</NavLi>
+        <NavLi href="/history">History</NavLi>
+        <NavLi href="/fav">Fav</NavLi>
     </NavUl>
 </Navbar>
-<main class="flex-1">
+<!-- bottom padding for the always-visible player bar -->
+<main class="flex-1 pb-40 md:pb-28">
     {@render children()}
 </main>
 <AudioPlayer />

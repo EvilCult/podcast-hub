@@ -29,6 +29,7 @@ export type EpisodeItem = {
     pub_date: number | null;
     pos: number | null;
     play_time: number | null;
+    is_fav: boolean;
 };
 
 export type HistoryUpdate = {

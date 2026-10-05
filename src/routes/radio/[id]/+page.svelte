@@ -3,35 +3,44 @@
     import { PlaySolid, TrashBinOutline } from 'flowbite-svelte-icons';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
+    import EpisodeRow, { type RowEpisode } from '$lib/components/EpisodeRow.svelte';
     import DelPodcast from './DelPodcast.svelte';
 
     let { data } = $props();
     const radio = $derived(data.radio as PlayerRadio);
-    let episodes = $derived(data.episodes as (PlayerEpisode & { digest: string | null })[]);
 
-    function play(item: PlayerEpisode) {
-        void playEpisode(item, radio);
-    }
-
-    function formatDuration(seconds: number | null) {
-        if (!seconds || seconds < 0) return '--:--';
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const rest = Math.floor(seconds % 60);
-        return hours
-            ? `${hours}:${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`
-            : `${minutes}:${String(rest).padStart(2, '0')}`;
-    }
-
-    function isPlayed(episode: PlayerEpisode) {
-        if (!episode.pos || !episode.duration) return false;
-
-        return episode.pos >= episode.duration - 30;
-    }
-
+    let episodes = $state<RowEpisode[]>([]);
     let page = $state(1);
     let loading = $state(false);
     let hasMore = $state(true);
+
+    // (re)load when navigating between radios
+    $effect(() => {
+        episodes = ((data.episodes ?? []) as RowEpisode[]).map((ep) => ({ ...ep }));
+        page = 1;
+        hasMore = true;
+    });
+
+    function play(item: RowEpisode) {
+        void playEpisode(item as PlayerEpisode, radio);
+    }
+
+    async function toggleFav(ep: RowEpisode) {
+        const res = await fetch('/api/fav', {
+            method: ep.is_fav ? 'DELETE' : 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ episode: ep.id })
+        });
+        if (!res.ok) return;
+        const result = await res.json();
+        episodes = episodes.map((e) => (e.id === ep.id ? { ...e, is_fav: result.favorited } : e));
+    }
+
+    async function deleteEpisode(ep: RowEpisode) {
+        const res = await fetch(`/api/episode/${ep.id}`, { method: 'DELETE' });
+        if (!res.ok) return;
+        episodes = episodes.filter((e) => e.id !== ep.id);
+    }
 
     async function loadMore() {
         if (loading || !hasMore) return;
@@ -51,7 +60,7 @@
         if (result.data.length === 0) {
             hasMore = false;
         } else {
-            episodes = [...episodes, ...result.data];
+            episodes = [...episodes, ...(result.data as RowEpisode[])];
             page = nextPage;
         }
 
@@ -114,53 +123,23 @@
     </div>
 </div>
 
-<div
-    class="divide-y divide-gray-200 bg-gray-100 px-4 sm:px-8 md:px-12 lg:px-20 dark:divide-gray-800 dark:bg-gray-700"
->
+<div class="bg-gray-100 px-4 sm:px-8 md:px-12 lg:px-20 dark:bg-gray-700">
     {#each episodes as episode (episode.id)}
-        {@const digest = episode.digest ?? ''}
-        <button
-            type="button"
-            class="group block w-full px-4 py-5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/50"
-            onclick={() => play(episode)}
-        >
-            <div class="flex items-start justify-between gap-4">
-                <div class="min-w-0">
-                    <h3
-                        class="truncate font-medium text-gray-900 group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400"
-                    >
-                        {episode.title}
-                    </h3>
-
-                    <p class="mt-1 text-sm break-all text-gray-500 dark:text-gray-400">
-                        {digest.length > 200 ? `${digest.slice(0, 200)}...` : digest}
-                    </p>
-                </div>
-
-                <div class="flex shrink-0 flex-col items-end text-sm">
-                    {#if isPlayed(episode)}
-                        <span class="text-primary-600 dark:text-primary-400"> 已听 </span>
-                    {:else if episode.pos && episode.pos > 0}
-                        <span class="text-primary-600 dark:text-primary-400">
-                            {formatDuration(episode.pos)}
-                        </span>
-                        <span class="text-gray-400">
-                            / {formatDuration(episode.duration)}
-                        </span>
-                    {:else}
-                        <span class="text-gray-500 dark:text-gray-400">
-                            {formatDuration(episode.duration)}
-                        </span>
-                    {/if}
-                </div>
-            </div>
-        </button>
+        <EpisodeRow
+            {episode}
+            onPlay={play}
+            onToggleFav={toggleFav}
+            onDelete={deleteEpisode}
+        />
     {/each}
     <div id="load-more" class=""></div>
     {#if loading}
         <div class="py-6 text-center text-sm text-gray-500">
             <Spinner type="dots" color="primary" />
         </div>
+    {/if}
+    {#if !loading && episodes.length === 0}
+        <div class="py-12 text-center text-sm text-gray-400">还没有单集</div>
     {/if}
 </div>
 <DelPodcast bind:popupModal radio_id={radio.id} />
