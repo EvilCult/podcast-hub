@@ -75,7 +75,7 @@
 
     function isPlayed(ep: RowEpisode) {
         if (!ep.pos || !ep.duration) return false;
-        return ep.pos >= ep.duration - 30;
+        return ep.pos >= ep.duration - 180;
     }
 
     const played = $derived(isPlayed(episode));
@@ -110,7 +110,9 @@
             </div>
         {/if}
         {#if episode.digest}
-            <p class="mt-1 line-clamp-3 text-sm leading-relaxed break-words text-gray-500 dark:text-gray-400">
+            <p
+                class="mt-1 line-clamp-3 text-sm leading-relaxed break-words text-gray-500 dark:text-gray-400"
+            >
                 {episode.digest}
             </p>
         {/if}
