@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
-    "fast-xml-parser": "^5.11.1"
+    "fast-xml-parser": "^5.11.1",
+    "undici": "^8.11.2"
   }
 }
