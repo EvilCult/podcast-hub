@@ -25,11 +25,13 @@ export function getEpisodeListByRadioId(
     radio_id: number,
     page: number,
     pageSize: number,
+    is_desc: boolean = true,
     new_ep: boolean = false
 ): EpisodeItem[] | undefined {
     const offset = (page - 1) * pageSize;
+    const desc = is_desc ? 'DESC' : 'ASC';
     const epFilter = new_ep ? ' AND (duration - pos > 180 OR pos IS NULL)' : '';
-    const sql = `SELECT ${TABLE}.*, ${HISTORY_TABLE}.pos, ${HISTORY_TABLE}.play_time, ${FAV_TABLE}.eid AS fav_eid FROM ${TABLE} LEFT JOIN ${HISTORY_TABLE} ON ${TABLE}.id = ${HISTORY_TABLE}.eid LEFT JOIN ${FAV_TABLE} ON ${FAV_TABLE}.eid = ${TABLE}.id AND ${FAV_TABLE}.uid = 0 WHERE radio_id = ? AND is_del = 0 ${epFilter} ORDER BY pub_date DESC LIMIT ?, ?`;
+    const sql = `SELECT ${TABLE}.*, ${HISTORY_TABLE}.pos, ${HISTORY_TABLE}.play_time, ${FAV_TABLE}.eid AS fav_eid FROM ${TABLE} LEFT JOIN ${HISTORY_TABLE} ON ${TABLE}.id = ${HISTORY_TABLE}.eid LEFT JOIN ${FAV_TABLE} ON ${FAV_TABLE}.eid = ${TABLE}.id AND ${FAV_TABLE}.uid = 0 WHERE radio_id = ? AND is_del = 0 ${epFilter} ORDER BY pub_date ${desc} LIMIT ?, ?`;
     const rows = fetchQuery<EpisodeData & { fav_eid: number | null }>(sql, [
         radio_id,
         offset,
