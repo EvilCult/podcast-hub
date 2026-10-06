@@ -12,22 +12,6 @@
     let podcast_url = $state('');
 </script>
 
-<div class="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur dark:border-gray-700 dark:bg-gray-900/90">
-    <div class="flex items-center gap-1 px-4 py-2.5">
-        <span class="mr-2 text-base font-bold text-gray-900 dark:text-white">播客</span>
-        <a
-            href={resolve('/fav')}
-            class="rounded-full px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-            >收藏</a
-        >
-        <a
-            href={resolve('/history')}
-            class="rounded-full px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-            >收听记录</a
-        >
-    </div>
-</div>
-
 <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-6">
     {#each radios as radio (radio.id)}
         <div class="space-y-4">
