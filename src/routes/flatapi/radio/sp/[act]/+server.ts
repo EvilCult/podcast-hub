@@ -1,0 +1,43 @@
+import { json, type RequestEvent } from '@sveltejs/kit';
+
+import { getFavEpisodes } from '$lib/server/repos/fav';
+import { getHistoryEpisodes } from '$lib/server/repos/history';
+import { deviceProfileQuery } from '$lib/server/transcode';
+import { PUBLIC_API_URL } from '$env/static/public';
+
+export function GET({ params, url }: RequestEvent) {
+    const action = params.act;
+    const page = Number(url.searchParams.get('p') ?? 1);
+    const pageSize = Number(url.searchParams.get('ps') ?? 5);
+    if (action !== 'fav' && action !== 'history') {
+        return json({ error: 'Invalid url params' }, { status: 400 });
+    }
+
+    let rows;
+
+    if (action == 'fav') {
+        rows = getFavEpisodes(page, pageSize);
+    }
+
+    if (action == 'history') {
+        rows = getHistoryEpisodes(page, pageSize);
+    }
+
+    if (!rows) {
+        return json({ error: 'Radio not found' }, { status: 404 });
+    }
+
+    return json(
+        rows.map((row) => {
+            return {
+                id: row.id,
+                title: row.title,
+                url: row.url
+                    ? `${PUBLIC_API_URL}/transcode?url=${encodeURIComponent(row.url)}&${deviceProfileQuery()}`
+                    : null,
+                duration: row.duration,
+                pos: row.pos
+            };
+        })
+    );
+}
