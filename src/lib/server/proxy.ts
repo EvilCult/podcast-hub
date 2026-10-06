@@ -4,16 +4,19 @@ import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
  * Route all server-side `fetch()` through an optional proxy.
  *
  * Env:
- *   PROXY_URL            the single switch, e.g. "socks5://172.22.1.1:20170".
- *                        Empty / unset = direct (default). Nothing else is
- *                        consulted -- the standard *_proxy vars are left
- *                        alone for tools like curl that read them natively.
+ *   PROXY_URL            the single switch, three cases:
+ *                          "" (empty/unset) -> direct (default)
+ *                          "socks5://host:port" (or any proxy URL)
+ *                            -> use it directly
+ *                          "https_proxy" (or http_proxy / all_proxy,
+ *                          case-insensitive) -> indirection: read that env
+ *                          var's value and use it as the proxy URL, so the
+ *                          URL isn't duplicated in compose.
+ *                        "empty = direct" stays unambiguous: standard
+ *                        *_proxy vars are never consulted unless explicitly
+ *                        named via the indirection keyword.
  *   no_proxy / NO_PROXY  honored for bypass (hostnames, wildcards, ports;
  *                        note: undici does not support CIDR entries).
- *
- * Behavior:
- *   - empty / unset -> do nothing, everything stays direct (default).
- *   - set           -> every server-side fetch goes through the proxy.
  *
  * Notes:
  *   - undici sends the raw hostname to a SOCKS5 proxy (ATYP 0x03), i.e. DNS
@@ -26,12 +29,29 @@ import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
  *     fetch, so one global dispatcher covers iTunes lookup, RSS feeds,
  *     /api/image and /api/audio without touching any call site.
  */
+const PROXY_ENV_KEYS = ['http_proxy', 'https_proxy', 'all_proxy'];
+
 export function resolveProxyUrl(env: NodeJS.ProcessEnv = process.env): string {
     const raw = env.PROXY_URL?.trim() || '';
 
     if (!raw) return '';
 
-    return raw.replace(/^socks5h:\/\//i, 'socks5://');
+    // Indirection keyword: PROXY_URL=https_proxy -> use $https_proxy's value.
+    const key = raw.toLowerCase();
+    if (PROXY_ENV_KEYS.includes(key)) {
+        const resolved = env[key]?.trim() || env[key.toUpperCase()]?.trim() || '';
+        if (!resolved) {
+            console.warn(`[proxy] PROXY_URL=${raw} but ${key} is not set, falling back to direct`);
+            return '';
+        }
+        return normalizeProxyUrl(resolved);
+    }
+
+    return normalizeProxyUrl(raw);
+}
+
+function normalizeProxyUrl(url: string): string {
+    return url.replace(/^socks5h:\/\//i, 'socks5://');
 }
 
 export function setupProxy(env: NodeJS.ProcessEnv = process.env): void {
