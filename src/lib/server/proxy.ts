@@ -4,9 +4,10 @@ import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
  * Route all server-side `fetch()` through an optional proxy.
  *
  * Env:
- *   PROXY_URL            dedicated switch, e.g. "socks5://172.22.1.1:20170".
- *                        Falls back to the standard http_proxy/https_proxy/
- *                        all_proxy (either case) when unset.
+ *   PROXY_URL            the single switch, e.g. "socks5://172.22.1.1:20170".
+ *                        Empty / unset = direct (default). Nothing else is
+ *                        consulted -- the standard *_proxy vars are left
+ *                        alone for tools like curl that read them natively.
  *   no_proxy / NO_PROXY  honored for bypass (hostnames, wildcards, ports;
  *                        note: undici does not support CIDR entries).
  *
@@ -26,15 +27,7 @@ import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
  *     /api/image and /api/audio without touching any call site.
  */
 export function resolveProxyUrl(env: NodeJS.ProcessEnv = process.env): string {
-    const raw =
-        env.PROXY_URL?.trim() ||
-        env.HTTPS_PROXY?.trim() ||
-        env.https_proxy?.trim() ||
-        env.HTTP_PROXY?.trim() ||
-        env.http_proxy?.trim() ||
-        env.ALL_PROXY?.trim() ||
-        env.all_proxy?.trim() ||
-        '';
+    const raw = env.PROXY_URL?.trim() || '';
 
     if (!raw) return '';
 
