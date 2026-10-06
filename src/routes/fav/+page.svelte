@@ -92,13 +92,6 @@
     });
 </script>
 
-<div class="sticky top-0 z-40 border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-gray-700 dark:bg-gray-900/90">
-    <div class="mx-auto flex max-w-3xl items-center gap-4">
-        <a href={resolve('/')} class="text-sm text-primary-600 dark:text-primary-400">‹ 播客</a>
-        <h1 class="text-lg font-bold text-gray-900 dark:text-white">我的收藏</h1>
-    </div>
-</div>
-
 <div class="mx-auto max-w-3xl bg-gray-100 px-4 pb-8 dark:bg-gray-700">
     {#each episodes as episode (episode.id)}
         <EpisodeRow
