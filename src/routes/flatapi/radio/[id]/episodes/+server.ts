@@ -12,7 +12,7 @@ export function GET({ params, url }: RequestEvent) {
         return json({ error: 'Invalid url params' }, { status: 400 });
     }
 
-    const rows = getEpisodeListByRadioId(radio_id, page, pageSize, true);
+    const rows = getEpisodeListByRadioId(radio_id, page, pageSize, false, true);
     if (!rows) {
         return json({ error: 'Radio not found' }, { status: 404 });
     }
