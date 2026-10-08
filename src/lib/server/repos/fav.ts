@@ -25,6 +25,7 @@ export function removeFav(eid: number, uid = 0): boolean {
 export type FavEpisodeItem = EpisodeItem & {
     radio_id: number;
     radio_title: string;
+    radio_cover: string | null;
     fav_time: number;
 };
 
@@ -33,7 +34,7 @@ export function getFavEpisodes(page: number, pageSize: number, uid = 0): FavEpis
     const offset = (page - 1) * pageSize;
     const sql = `
         SELECT episodes.*, histories.pos, histories.play_time,
-               radios.title AS radio_title, fav.created_at AS fav_time
+               radios.title AS radio_title, radios.cover AS radio_cover, fav.created_at AS fav_time
         FROM fav
         JOIN episodes ON episodes.id = fav.eid
         JOIN radios ON radios.id = episodes.radio_id
@@ -41,7 +42,7 @@ export function getFavEpisodes(page: number, pageSize: number, uid = 0): FavEpis
         WHERE fav.uid = ? AND episodes.is_del = 0
         ORDER BY fav.created_at DESC
         LIMIT ?, ?`;
-    const rows = fetchQuery<EpisodeData & { radio_title: string; fav_time: number }>(sql, [
+    const rows = fetchQuery<EpisodeData & { radio_title: string; radio_cover: string | null; fav_time: number }>(sql, [
         uid,
         offset,
         pageSize
@@ -58,6 +59,7 @@ export function getFavEpisodes(page: number, pageSize: number, uid = 0): FavEpis
         is_fav: true,
         radio_id: row.radio_id,
         radio_title: row.radio_title,
+        radio_cover: row.radio_cover,
         fav_time: row.fav_time
     }));
 }

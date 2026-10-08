@@ -17,7 +17,7 @@
     let hasMore = $state(true);
 
     function radioOf(ep: RowEpisode): PlayerRadio {
-        return { id: ep.radio_id ?? 0, title: ep.radio_title ?? '', cover: null };
+        return { id: ep.radio_id ?? 0, title: ep.radio_title ?? '', cover: ep.radio_cover ?? null };
     }
 
     function play(item: RowEpisode) {

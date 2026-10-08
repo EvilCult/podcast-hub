@@ -11,6 +11,7 @@
         is_fav: boolean;
         radio_id?: number;
         radio_title?: string | null;
+        radio_cover?: string | null;
         play_time?: number | null;
     };
 
