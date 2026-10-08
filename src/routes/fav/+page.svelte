@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { resolve } from '$app/paths';
     import { Spinner } from 'flowbite-svelte';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
@@ -7,11 +6,8 @@
 
     let { data } = $props();
 
-    let episodes = $state<RowEpisode[]>([]);
+    let episodes = $derived(((data.episodes ?? []) as RowEpisode[]).map((ep) => ({ ...ep })));
 
-    $effect(() => {
-        episodes = ((data.episodes ?? []) as RowEpisode[]).map((ep) => ({ ...ep }));
-    });
     let page = $state(1);
     let loading = $state(false);
     let hasMore = $state(true);
