@@ -35,6 +35,7 @@ export const GET: RequestHandler = async ({ url }) => {
             pos: row.pos,
             radio_id: row.radio_id,
             radio_title: row.radio_title,
+            radio_cover: row.radio_cover,
             fav_time: row.fav_time,
             is_fav: true
         }))

@@ -11,6 +11,7 @@
         is_fav: boolean;
         radio_id?: number;
         radio_title?: string | null;
+        radio_cover?: string | null;
         play_time?: number | null;
     };
 
@@ -111,7 +112,7 @@
         {/if}
         {#if episode.digest}
             <p
-                class="mt-1 line-clamp-3 text-sm leading-relaxed break-words text-gray-500 dark:text-gray-400"
+                class="mt-1 line-clamp-3 text-sm leading-relaxed wrap-break-word text-gray-500 dark:text-gray-400"
             >
                 {episode.digest}
             </p>

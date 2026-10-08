@@ -20,6 +20,7 @@ export function getHistoryById(id: number) {
 export type HistoryEpisodeItem = EpisodeItem & {
     radio_id: number;
     radio_title: string;
+    radio_cover: string | null;
 };
 
 /** Episodes with listening history, most recently played first. */
@@ -27,7 +28,7 @@ export function getHistoryEpisodes(page: number, pageSize: number, uid = 0): His
     const offset = (page - 1) * pageSize;
     const sql = `
         SELECT episodes.*, histories.pos, histories.play_time,
-               radios.title AS radio_title, fav.eid AS fav_eid
+               radios.title AS radio_title, radios.cover AS radio_cover, fav.eid AS fav_eid
         FROM histories
         JOIN episodes ON episodes.id = histories.eid
         JOIN radios ON radios.id = episodes.radio_id
@@ -35,7 +36,7 @@ export function getHistoryEpisodes(page: number, pageSize: number, uid = 0): His
         WHERE histories.uid = ? AND episodes.is_del = 0
         ORDER BY histories.play_time DESC
         LIMIT ?, ?`;
-    const rows = fetchQuery<EpisodeData & { radio_title: string; fav_eid: number | null }>(sql, [
+    const rows = fetchQuery<EpisodeData & { radio_title: string; radio_cover: string | null; fav_eid: number | null }>(sql, [
         uid,
         offset,
         pageSize
@@ -51,6 +52,7 @@ export function getHistoryEpisodes(page: number, pageSize: number, uid = 0): His
         play_time: row.play_time,
         is_fav: row.fav_eid != null,
         radio_id: row.radio_id,
-        radio_title: row.radio_title
+        radio_title: row.radio_title,
+        radio_cover: row.radio_cover
     }));
 }

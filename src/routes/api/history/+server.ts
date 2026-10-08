@@ -24,6 +24,7 @@ export function GET({ url }: RequestEvent) {
             play_time: row.play_time,
             radio_id: row.radio_id,
             radio_title: row.radio_title,
+            radio_cover: row.radio_cover,
             is_fav: row.is_fav
         }))
     });

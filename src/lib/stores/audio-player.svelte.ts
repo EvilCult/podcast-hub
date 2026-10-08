@@ -158,11 +158,20 @@ function updateMetadata() {
         return;
     }
 
+    // iOS rejects artwork without `sizes` and falls back to the app icon;
+    // absolute URL is safer in standalone PWA context.
+    const artworkSrc = player.radio.cover
+        ? `${location.origin}/api/image?url=${encodeURIComponent(player.radio.cover)}`
+        : '';
+
     navigator.mediaSession.metadata = new MediaMetadata({
         title: player.episode.title,
         artist: player.radio.title,
-        artwork: player.radio.cover
-            ? [{ src: `/api/image?url=${encodeURIComponent(player.radio.cover)}` }]
+        artwork: artworkSrc
+            ? [96, 128, 192, 256, 384, 512].map((s) => ({
+                    src: artworkSrc,
+                    sizes: `${s}x${s}`
+                }))
             : []
     });
 }
