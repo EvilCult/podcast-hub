@@ -68,13 +68,22 @@
         <h3 class="mb-5 text-base font-normal text-gray-500 dark:text-gray-400">添加新的PodCast</h3>
         <div class="space-x-2">
             <ButtonGroup class="w-full">
-                <Select bind:value={source} disabled={postLoading} class="w-24 shrink-0">
+                <!-- Native <select> renders ~2px taller than <input> with identical
+                     padding (browser quirk, no appearance-none here), so pin both
+                     inner elements to the same height: text-sm (20px) + py-2.5 (20px)
+                     + border (2px) = 42px, border-box. -->
+                <Select
+                    bind:value={source}
+                    disabled={postLoading}
+                    class="w-24 shrink-0 [&_select]:h-[42px]"
+                >
                     <option value="apple">Apple</option>
                     <option value="rss">RSS</option>
                 </Select>
                 <Input
                     id="input-addon-button"
                     type="text"
+                    class="[&_input]:h-[42px]"
                     placeholder={source === 'apple'
                         ? 'https://podcasts.apple.com/us/podcast/xxxxxxxx'
                         : 'https://example.com/feed.xml'}
