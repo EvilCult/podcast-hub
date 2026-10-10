@@ -1,7 +1,6 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { spawn, execFile } from 'child_process';
 import { promisify } from 'util';
-import { PUBLIC_API_URL } from '$env/static/public';
 
 import {
     DEFAULT_PROFILE,
@@ -36,8 +35,10 @@ async function probeFormatNumber(targetUrl: string, entry: string): Promise<numb
 
 // ffmpeg/ffprobe pull the source through the app's proxy-aware fetch via the
 // key-gated internal /api/audio hop (subprocesses can't use our undici proxy).
-const internalAudioUrl = (audioUrl: string) =>
-    `${PUBLIC_API_URL}/audio?url=${encodeURIComponent(audioUrl)}&key=${INTERNAL_AUDIO_KEY}`;
+// Built from the request's own origin: works in dev, Docker and behind reverse
+// proxies without depending on the build-time PUBLIC_API_URL.
+const internalAudioUrl = (requestUrl: URL, audioUrl: string) =>
+    `${requestUrl.origin}/api/audio?url=${encodeURIComponent(audioUrl)}&key=${INTERNAL_AUDIO_KEY}`;
 
 export async function GET({ url, request, fetch, locals }: RequestEvent) {
     const audioUrl = url.searchParams.get('url');
@@ -61,7 +62,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
             return proxyAudioResponse(audioUrl, request, fetch);
         }
         const target = TIER_PROFILES[tier];
-        const hopUrl = internalAudioUrl(audioUrl);
+        const hopUrl = internalAudioUrl(url, audioUrl);
         const bitRateBps = await probeFormatNumber(hopUrl, 'bit_rate');
         const srcBr = bitRateBps === null ? null : Math.round(bitRateBps / 1000);
         if (srcBr === null) {
@@ -87,7 +88,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
 
     const bytesPerSecond = profile.bytesPerSecond || DEFAULT_PROFILE.bytesPerSecond;
 
-    const hopUrl = internalAudioUrl(audioUrl);
+    const hopUrl = internalAudioUrl(url, audioUrl);
 
     const duration = (await probeFormatNumber(hopUrl, 'duration')) ?? 0;
     const totalBytes = duration > 0 ? Math.floor(duration * bytesPerSecond) : 0;

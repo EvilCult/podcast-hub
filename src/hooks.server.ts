@@ -15,7 +15,8 @@ const PUBLIC_PREFIXES = [
     '/icons/', // PWA icons
     '/flatapi/', // device API: unauthenticated by design, independent of the web app
     '/api/auth/login', // the login endpoint itself
-    '/api/transcode' // self-discriminates: device mode (explicit sr/br/ch) vs user mode (JWT)
+    '/api/transcode', // self-discriminates: device mode (explicit sr/br/ch) vs user mode (JWT)
+    '/api/audio' // key-gated internal hop for the transcode pipeline (403 without the per-boot key)
 ];
 
 function isPublic(pathname: string): boolean {

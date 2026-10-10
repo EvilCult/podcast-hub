@@ -215,9 +215,14 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
 
     try {
         await audio.play();
-    } catch {
+    } catch (e) {
         player.loading = false;
-        player.error = '浏览器阻止了自动播放，请再次点击播放';
+        // NotAllowedError = genuinely blocked autoplay (needs another tap).
+        // Anything else (e.g. NotSupportedError) means the stream itself failed.
+        player.error =
+            e instanceof DOMException && e.name === 'NotAllowedError'
+                ? '浏览器阻止了自动播放，请再次点击播放'
+                : `播放失败：${e instanceof Error ? e.message : '音频流加载失败'}`;
     }
 }
 
