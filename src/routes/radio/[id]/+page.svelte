@@ -148,7 +148,7 @@
                     title="切换单集排序"
                     onclick={toggleSort}
                 >
-                    {sortAsc ? 'Oldest first' : 'Newest first'}
+                    {sortAsc ? 'Oldest' : 'Newest'}
                     {#if sortAsc}
                         <ArrowUpOutline class="ms-2 h-5 w-5" />
                     {:else}
