@@ -212,12 +212,10 @@
                             <div
                                 class="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700"
                             >
-                                <div class="text-sm">
-                                    <span class="font-medium text-gray-900 dark:text-white">{u.username}</span>
-                                    <span class="ml-2 text-gray-500 dark:text-gray-400">id={u.id}</span>
-                                    {#if u.id === 1}<span class="ml-2 text-xs text-amber-600">管理员</span>{/if}
-                                </div>
-                                {#if u.id !== 1}
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{u.username}</span>
+                                {#if u.id === 1}
+                                    <Button size="xs" color="light" disabled>管理员</Button>
+                                {:else}
                                     <Button size="xs" color="red" onclick={() => deleteUser(u.id, u.username)}
                                         >删除</Button
                                     >
