@@ -142,6 +142,7 @@
                     >Play <PlaySolid class="ml-2" /></Button
                 >
                 <Button
+                    pill
                     outline
                     color="dark"
                     title="切换单集排序"
