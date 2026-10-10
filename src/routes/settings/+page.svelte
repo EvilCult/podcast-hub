@@ -9,6 +9,48 @@
     let me: MeInfo = $derived(data.me);
     let users: UserListItem[] = $derived(data.users);
 
+    // ---- change username ----
+    let usernameInput: string = $state('');
+    let usernameInit = false;
+    $effect(() => {
+        if (!usernameInit && data.me.username) {
+            usernameInput = data.me.username;
+            usernameInit = true;
+        }
+    });
+    let unMsg = $state('');
+    let unOk = $state(false);
+    let unLoading = $state(false);
+
+    async function updateUsername() {
+        unMsg = '';
+        unOk = false;
+        if (!usernameInput.trim()) {
+            unMsg = '用户名不能为空';
+            return;
+        }
+        unLoading = true;
+        try {
+            const res = await fetch('/api/auth/username', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newUsername: usernameInput.trim() })
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                unMsg = body.error ?? '修改失败';
+                return;
+            }
+            unOk = true;
+            unMsg = '用户名修改成功';
+            await invalidateAll();
+        } catch {
+            unMsg = '网络错误，请重试';
+        } finally {
+            unLoading = false;
+        }
+    }
+
     // ---- change password ----
     let oldPassword = $state('');
     let newPassword = $state('');
@@ -174,6 +216,24 @@
                 </Label>
                 {#if presetMsg}<p class="text-sm text-gray-500 dark:text-gray-400">{presetMsg}</p>{/if}
                 <Button type="submit" color="primary" disabled={presetLoading}>保存</Button>
+            </form>
+        </Card>
+
+        <Card class="w-full max-w-none p-4 sm:p-6 md:p-8">
+            <form
+                class="flex flex-col space-y-6"
+                onsubmit={(e) => {
+                    e.preventDefault();
+                    updateUsername();
+                }}
+            >
+                <h2 class="text-xl font-medium text-gray-900 dark:text-white">修改用户名</h2>
+                <Label class="space-y-2">
+                    <span>用户名</span>
+                    <Input type="text" bind:value={usernameInput} disabled={unLoading} />
+                </Label>
+                {#if unMsg}<p class="text-sm {unOk ? 'text-green-600' : 'text-red-500'}">{unMsg}</p>{/if}
+                <Button type="submit" color="primary" disabled={unLoading}>保存</Button>
             </form>
         </Card>
 

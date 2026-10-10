@@ -42,6 +42,10 @@ export function updateUserPassword(id: number, passwordHash: string): boolean {
     return updateById(TABLE, id, { password_hash: passwordHash });
 }
 
+export function updateUsername(id: number, username: string): boolean {
+    return updateById(TABLE, id, { username });
+}
+
 export function updateUserPreset(id: number, preset: string): boolean {
     return updateById(TABLE, id, { tr_preset: preset });
 }
