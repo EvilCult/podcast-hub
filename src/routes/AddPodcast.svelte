@@ -7,6 +7,7 @@
         InputAddon,
         ButtonGroup,
         Modal,
+        Select,
         Spinner,
         Toast,
         ToastContainer
@@ -14,6 +15,9 @@
     import { slide, fly } from 'svelte/transition';
 
     let postLoading = $state(false);
+    // Input source selector: explicit instead of auto-detecting from the URL.
+    // Switching it never touches the input's existing state (podcast_url).
+    let source = $state('apple');
 
     async function handelAddPodcast() {
         postLoading = true;
@@ -24,7 +28,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ url: podcast_url })
+                body: JSON.stringify({ url: podcast_url, source })
             });
 
             if (!res.ok) {
@@ -65,12 +69,17 @@
         <h3 class="mb-5 text-base font-normal text-gray-500 dark:text-gray-400">添加新的PodCast</h3>
         <div class="space-x-2">
             <ButtonGroup class="w-full">
+                <Select bind:value={source} disabled={postLoading} class="max-w-32 shrink-0">
+                    <option value="apple">Apple</option>
+                    <option value="rss">RSS</option>
+                </Select>
                 <InputAddon>url</InputAddon>
                 <Input
                     id="input-addon-button"
                     type="text"
-                    placeholder="https://podcasts.apple.com/us/podcast/xxxxxxxx
-                "
+                    placeholder={source === 'apple'
+                        ? 'https://podcasts.apple.com/us/podcast/xxxxxxxx'
+                        : 'https://example.com/feed.xml'}
                     bind:value={podcast_url}
                     disabled={postLoading}
                 />

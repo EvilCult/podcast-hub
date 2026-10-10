@@ -1,41 +1,95 @@
-import { type RequestEvent } from '@sveltejs/kit';
-import { spawn, exec } from 'child_process';
-import { error } from '@sveltejs/kit';
+import { error, type RequestEvent } from '@sveltejs/kit';
+import { spawn, execFile } from 'child_process';
 import { promisify } from 'util';
 import { PUBLIC_API_URL } from '$env/static/public';
 
-import { DEFAULT_PROFILE, parseTranscodeProfile } from '$lib/server/transcode';
+import {
+    DEFAULT_PROFILE,
+    TIER_PROFILES,
+    parseTranscodeProfile,
+    type TranscodeProfile
+} from '$lib/server/transcode';
+import { isTierName } from '$lib/tiers';
+import { INTERNAL_AUDIO_KEY, proxyAudioResponse } from '$lib/server/audio';
+import { getUserById } from '$lib/server/repos/user';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
-async function getAudioDuration(targetUrl: string): Promise<number> {
+/** ffprobe a numeric format entry (duration, bit_rate). Null when unavailable. */
+async function probeFormatNumber(targetUrl: string, entry: string): Promise<number | null> {
     try {
-        const cmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${targetUrl}"`;
-        const { stdout } = await execAsync(cmd);
-        const duration = parseFloat(stdout.trim());
-        return isNaN(duration) ? 0 : duration;
-    } catch (e) {
-        console.warn('Failed to get duration via ffprobe:', e);
-        return 0;
+        const { stdout } = await execFileAsync('ffprobe', [
+            '-v',
+            'error',
+            '-show_entries',
+            `format=${entry}`,
+            '-of',
+            'default=noprint_wrappers=1:nokey=1',
+            targetUrl
+        ]);
+        const v = parseFloat(stdout.trim());
+        return Number.isNaN(v) ? null : v;
+    } catch {
+        return null;
     }
 }
 
-export async function GET({ url, request }: RequestEvent) {
+// ffmpeg/ffprobe pull the source through the app's proxy-aware fetch via the
+// key-gated internal /api/audio hop (subprocesses can't use our undici proxy).
+const internalAudioUrl = (audioUrl: string) =>
+    `${PUBLIC_API_URL}/audio?url=${encodeURIComponent(audioUrl)}&key=${INTERNAL_AUDIO_KEY}`;
+
+export async function GET({ url, request, fetch, locals }: RequestEvent) {
     const audioUrl = url.searchParams.get('url');
 
     if (!audioUrl) {
         throw error(400, 'Missing url parameter');
     }
 
-    const profile = parseTranscodeProfile(url.searchParams);
-    if (!profile) {
-        throw error(400, 'Invalid transcode profile (sr/br/ch out of range)');
+    // Profile resolution:
+    // - logged-in web user -> their saved tier (smart bitrate rule applies)
+    // - anonymous + explicit sr/br/ch -> device (flatapi) mode, unchanged behavior
+    // - otherwise -> 401
+    let profile: TranscodeProfile;
+    const user = locals.user;
+
+    if (user) {
+        const row = getUserById(user.id);
+        const tier = row && isTierName(row.tr_preset) ? row.tr_preset : 'standard';
+        if (tier === 'original') {
+            // "原始" tier: no ffmpeg, serve the source stream directly.
+            return proxyAudioResponse(audioUrl, request, fetch);
+        }
+        const target = TIER_PROFILES[tier];
+        const hopUrl = internalAudioUrl(audioUrl);
+        const bitRateBps = await probeFormatNumber(hopUrl, 'bit_rate');
+        const srcBr = bitRateBps === null ? null : Math.round(bitRateBps / 1000);
+        if (srcBr === null) {
+            // Source quality unknown: cap at standard, never upscale blindly.
+            profile = target.br <= TIER_PROFILES.standard.br ? target : TIER_PROFILES.standard;
+        } else if (srcBr <= target.br) {
+            // Source already at/below the requested quality: skip useless upscaling.
+            return proxyAudioResponse(audioUrl, request, fetch);
+        } else {
+            profile = target;
+        }
+    } else {
+        const hasExplicit = ['sr', 'br', 'ch'].some((k) => url.searchParams.get(k) !== null);
+        if (!hasExplicit) {
+            throw error(401, 'Login required');
+        }
+        const parsed = parseTranscodeProfile(url.searchParams);
+        if (!parsed) {
+            throw error(400, 'Invalid transcode profile (sr/br/ch out of range)');
+        }
+        profile = parsed;
     }
+
     const bytesPerSecond = profile.bytesPerSecond || DEFAULT_PROFILE.bytesPerSecond;
 
-    const realSourceUrl = `${PUBLIC_API_URL}/audio?url=${encodeURIComponent(audioUrl)}`;
+    const hopUrl = internalAudioUrl(audioUrl);
 
-    const duration = await getAudioDuration(realSourceUrl);
+    const duration = (await probeFormatNumber(hopUrl, 'duration')) ?? 0;
     const totalBytes = duration > 0 ? Math.floor(duration * bytesPerSecond) : 0;
 
     const rangeHeader = request.headers.get('range');
@@ -60,7 +114,7 @@ export async function GET({ url, request }: RequestEvent) {
         '-ss',
         startSeconds,
         '-i',
-        realSourceUrl,
+        hopUrl,
         '-vn',
         '-acodec',
         'libmp3lame',

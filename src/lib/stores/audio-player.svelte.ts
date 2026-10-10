@@ -191,7 +191,9 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
     player.currentTime = 0;
     player.duration = episode.duration ?? 0;
 
-    const proxiedUrl = `/api/audio?url=${encodeURIComponent(episode.url)}`;
+    // All web playback goes through /api/transcode: the server applies the
+    // user's saved tier (or serves the source directly for the "original" tier).
+    const proxiedUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}`;
 
     audio.src = proxiedUrl;
     audio.playbackRate = player.playbackRate;

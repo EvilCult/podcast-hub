@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { SCHEMA_SQL } from './schema';
+import { hashPassword } from '../auth';
 
 const DB_PATH = path.resolve('data/database.db');
 
@@ -11,6 +12,23 @@ const DB_PATH = path.resolve('data/database.db');
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 const db = new Database(DB_PATH);
 db.exec(SCHEMA_SQL);
+
+// Seed the default admin (id 1) on first run and attribute legacy
+// single-user data (uid 0) to them. Idempotent.
+(function ensureAdmin() {
+    const hasUsers = db.prepare('SELECT 1 FROM users LIMIT 1').get() !== undefined;
+    if (hasUsers) return;
+    const now = Math.floor(Date.now() / 1000);
+    db.prepare('INSERT INTO users (username, password_hash, tr_preset, created_at) VALUES (?, ?, ?, ?)').run(
+        'admin',
+        hashPassword('123456'),
+        'standard',
+        now
+    );
+    db.prepare('UPDATE histories SET uid = 1 WHERE uid = 0').run();
+    db.prepare('UPDATE fav SET uid = 1 WHERE uid = 0').run();
+    console.log('[db] seeded default admin user (id 1); migrated legacy uid=0 rows');
+})();
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
