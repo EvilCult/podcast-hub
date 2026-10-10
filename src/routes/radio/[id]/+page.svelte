@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button, Avatar, Spinner } from 'flowbite-svelte';
-    import { PlaySolid, TrashBinOutline } from 'flowbite-svelte-icons';
+    import { PlaySolid, TrashBinOutline, ArrowUpOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
     import EpisodeRow, { type RowEpisode } from '$lib/components/EpisodeRow.svelte';
@@ -13,13 +13,32 @@
     let page = $state(1);
     let loading = $state(false);
     let hasMore = $state(true);
+    let sortAsc = $state(false); // false = newest first (default), true = oldest first
 
     // (re)load when navigating between radios
     $effect(() => {
         episodes = ((data.episodes ?? []) as RowEpisode[]).map((ep) => ({ ...ep }));
         page = 1;
         hasMore = true;
+        sortAsc = false;
     });
+
+    function toggleSort() {
+        sortAsc = !sortAsc;
+        void reloadEpisodes();
+    }
+
+    async function reloadEpisodes() {
+        if (loading) return;
+        loading = true;
+        const res = await fetch(`/api/radio/${radio.id}/episodes?p=1&order=${sortAsc ? 'asc' : 'desc'}`);
+        loading = false;
+        if (!res.ok) return;
+        const result = await res.json();
+        episodes = (result.data as RowEpisode[]).map((ep) => ({ ...ep }));
+        page = 1;
+        hasMore = result.data.length > 0;
+    }
 
     function play(item: RowEpisode) {
         void playEpisode(item as PlayerEpisode, radio);
@@ -56,7 +75,9 @@
         loading = true;
 
         const nextPage = page + 1;
-        const res = await fetch(`/api/radio/${radio.id}/episodes?p=${nextPage}`);
+        const res = await fetch(
+            `/api/radio/${radio.id}/episodes?p=${nextPage}&order=${sortAsc ? 'asc' : 'desc'}`
+        );
 
         if (!res.ok) {
             loading = false;
@@ -120,11 +141,27 @@
                 <Button pill onclick={() => episodes[0] && play(episodes[0])}
                     >Play <PlaySolid class="ml-2" /></Button
                 >
-                <Button pill outline={true} class="size-8 p-2!">
-                    <TrashBinOutline
-                        class="size-5 text-primary-700"
-                        onclick={() => (popupModal = true)}
-                    />
+                <Button
+                    pill
+                    outline={true}
+                    class="size-8 p-2!"
+                    title={sortAsc ? '当前：最早优先，点击切换为最新优先' : '当前：最新优先，点击切换为最早优先'}
+                    onclick={toggleSort}
+                >
+                    {#if sortAsc}
+                        <ArrowUpOutline class="size-5 text-primary-700" />
+                    {:else}
+                        <ArrowDownOutline class="size-5 text-primary-700" />
+                    {/if}
+                </Button>
+                <Button
+                    pill
+                    outline={true}
+                    class="ml-auto size-8 p-2!"
+                    title="删除播客"
+                    onclick={() => (popupModal = true)}
+                >
+                    <TrashBinOutline class="size-5 text-primary-700" />
                 </Button>
             </div>
         </div>
