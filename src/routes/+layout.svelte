@@ -44,13 +44,13 @@
                 <DropdownItem href="/fav">Fav</DropdownItem>
                 <DropdownItem href="/settings">Settings</DropdownItem>
                 <DropdownDivider />
-                <DropdownItem onclick={logout}>登出</DropdownItem>
+                <DropdownItem onclick={logout}>Logout</DropdownItem>
             </Dropdown>
             <!-- Mobile: plain items inside the folded hamburger menu -->
             <NavLi href="/history" class="md:hidden">History</NavLi>
             <NavLi href="/fav" class="md:hidden">Fav</NavLi>
             <NavLi href="/settings" class="md:hidden">Settings</NavLi>
-            <NavLi class="cursor-pointer md:hidden" onclick={logout}>登出</NavLi>
+            <NavLi class="cursor-pointer md:hidden" onclick={logout}>Logout</NavLi>
         </NavUl>
     {/if}
 </Navbar>
