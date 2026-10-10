@@ -63,7 +63,7 @@
     }
 </script>
 
-<Modal form bind:open={popupModal} size="xs" transition={slide} permanent>
+<Modal form bind:open={popupModal} size="xs" transition={slide}>
     <div class="text-center">
         <h3 class="mb-5 text-base font-normal text-gray-500 dark:text-gray-400">添加新的PodCast</h3>
         <div class="space-x-2">

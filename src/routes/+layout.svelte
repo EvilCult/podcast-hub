@@ -1,11 +1,20 @@
 <script lang="ts">
     import './layout.css';
     import favicon from '$lib/assets/favicon.svg';
-    import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Button } from 'flowbite-svelte';
+    import {
+        Navbar,
+        NavBrand,
+        NavLi,
+        NavUl,
+        NavHamburger,
+        Dropdown,
+        DropdownItem,
+        DropdownDivider
+    } from 'flowbite-svelte';
     import AudioPlayer from '$lib/components/audio/AudioPlayer.svelte';
     import { goto } from '$app/navigation';
 
-    import { AppleSolid } from 'flowbite-svelte-icons';
+    import { AppleSolid, ChevronDownOutline } from 'flowbite-svelte-icons';
 
     let { children, data } = $props();
 
@@ -24,19 +33,19 @@
         >
     </NavBrand>
     <NavHamburger />
-    <NavUl>
-        <NavLi href="/">Home</NavLi>
-        <NavLi href="/history">History</NavLi>
-        <NavLi href="/fav">Fav</NavLi>
-        {#if data.user}
-            <NavLi href="/settings">Settings</NavLi>
-        {/if}
-    </NavUl>
     {#if data.user}
-        <div class="flex items-center gap-3">
-            <span class="hidden text-sm text-gray-500 sm:inline dark:text-gray-400">{data.user.username}</span>
-            <Button size="xs" color="light" onclick={logout}>登出</Button>
-        </div>
+        <NavUl>
+            <NavLi class="cursor-pointer">
+                {data.user.username}<ChevronDownOutline class="ms-2 inline h-6 w-6" />
+            </NavLi>
+            <Dropdown simple class="w-44">
+                <DropdownItem href="/history">History</DropdownItem>
+                <DropdownItem href="/fav">Fav</DropdownItem>
+                <DropdownItem href="/settings">Settings</DropdownItem>
+                <DropdownDivider />
+                <DropdownItem onclick={logout}>登出</DropdownItem>
+            </Dropdown>
+        </NavUl>
     {/if}
 </Navbar>
 <!-- bottom padding for the always-visible player bar -->
