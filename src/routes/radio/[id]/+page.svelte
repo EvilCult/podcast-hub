@@ -142,16 +142,16 @@
                     >Play <PlaySolid class="ml-2" /></Button
                 >
                 <Button
-                    pill
-                    outline={true}
-                    class="size-8 p-2!"
-                    title={sortAsc ? '当前：最早优先，点击切换为最新优先' : '当前：最新优先，点击切换为最早优先'}
+                    outline
+                    color="dark"
+                    title="切换单集排序"
                     onclick={toggleSort}
                 >
+                    {sortAsc ? 'Oldest first' : 'Newest first'}
                     {#if sortAsc}
-                        <ArrowUpOutline class="size-5 text-primary-700" />
+                        <ArrowUpOutline class="ms-2 h-5 w-5" />
                     {:else}
-                        <ArrowDownOutline class="size-5 text-primary-700" />
+                        <ArrowDownOutline class="ms-2 h-5 w-5" />
                     {/if}
                 </Button>
                 <Button
