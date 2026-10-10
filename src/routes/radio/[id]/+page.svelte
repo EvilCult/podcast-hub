@@ -25,6 +25,14 @@
         void playEpisode(item as PlayerEpisode, radio);
     }
 
+    // last_update is a unix timestamp in seconds -> yyyy-mm-dd hh:mm:ss
+    function fmtTs(ts: number | null | undefined) {
+        if (!ts) return '—';
+        const d = new Date(ts * 1000);
+        const p = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    }
+
     async function toggleFav(ep: RowEpisode) {
         const res = await fetch('/api/fav', {
             method: ep.is_fav ? 'DELETE' : 'PUT',
@@ -107,7 +115,7 @@
             >
                 {data.radio.digest}
             </div>
-            <div class="mt-2 text-xs text-gray-400">最后更新: {data.radio.last_update}</div>
+            <div class="mt-2 text-xs text-gray-400">最后更新: {fmtTs(data.radio.last_update)}</div>
             <div class="mt-4 flex items-center gap-2">
                 <Button pill onclick={() => episodes[0] && play(episodes[0])}
                     >Play <PlaySolid class="ml-2" /></Button

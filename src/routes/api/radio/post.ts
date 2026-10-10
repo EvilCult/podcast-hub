@@ -10,7 +10,16 @@ export const post: RequestHandler = async ({ request }) => {
     const podcastUrl = data.url as string;
     let feedUrl;
 
-    if (podcastUrl.includes('podcasts.apple.com')) {
+    // Explicit source from the add-radio modal ('apple' | 'rss').
+    // Falls back to the old URL sniffing when the client doesn't send it.
+    const source =
+        data.source === 'apple' || data.source === 'rss'
+            ? data.source
+            : podcastUrl.includes('podcasts.apple.com')
+              ? 'apple'
+              : 'rss';
+
+    if (source === 'apple') {
         // 1. 从 Apple Podcast URL 提取 country 和 id
         const url = new URL(podcastUrl);
 

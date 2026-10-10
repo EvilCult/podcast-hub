@@ -8,6 +8,8 @@
  * lightweight profile (22050 Hz, 48 kbps, mono) instead.
  */
 
+import type { TierName } from '$lib/tiers';
+
 export interface TranscodeProfile {
 	/** sample rate in Hz */
 	sr: number;
@@ -33,6 +35,12 @@ export const DEVICE_PROFILE: TranscodeProfile = {
 	br: 48,
 	ch: 1,
 	bytesPerSecond: 6000
+};
+
+export const TIER_PROFILES: Record<Exclude<TierName, 'original'>, TranscodeProfile> = {
+	smooth: { sr: 32000, br: 48, ch: 1, bytesPerSecond: 6000 },
+	standard: { sr: 44100, br: 96, ch: 2, bytesPerSecond: 12000 },
+	high: { sr: 44100, br: 128, ch: 2, bytesPerSecond: 16000 }
 };
 
 function parseBounded(
