@@ -4,7 +4,6 @@
     import {
         Button,
         Input,
-        InputAddon,
         ButtonGroup,
         Modal,
         Select,
@@ -69,11 +68,10 @@
         <h3 class="mb-5 text-base font-normal text-gray-500 dark:text-gray-400">添加新的PodCast</h3>
         <div class="space-x-2">
             <ButtonGroup class="w-full">
-                <Select bind:value={source} disabled={postLoading} class="max-w-32 shrink-0">
+                <Select bind:value={source} disabled={postLoading} class="w-24 shrink-0">
                     <option value="apple">Apple</option>
                     <option value="rss">RSS</option>
                 </Select>
-                <InputAddon>url</InputAddon>
                 <Input
                     id="input-addon-button"
                     type="text"
