@@ -13,6 +13,7 @@
     } from 'flowbite-svelte';
     import AudioPlayer from '$lib/components/audio/AudioPlayer.svelte';
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
 
     import { AppleSolid, ChevronDownOutline } from 'flowbite-svelte-icons';
 
@@ -20,7 +21,7 @@
 
     async function logout() {
         await fetch('/api/auth/logout', { method: 'POST' });
-        await goto('/login');
+        await goto(resolve('/login'));
     }
 </script>
 
