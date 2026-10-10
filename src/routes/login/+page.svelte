@@ -35,39 +35,35 @@
 </script>
 
 <div class="flex min-h-[70vh] items-center justify-center px-4">
-    <Card class="w-full max-w-sm">
-        <h1 class="mb-6 text-center text-xl font-semibold text-gray-900 dark:text-white">
-            PodCast Streaming Proxy
-        </h1>
+    <Card class="w-full max-w-sm p-4 sm:p-6 md:p-8">
         <form
+            class="flex flex-col space-y-6"
             onsubmit={(e) => {
                 e.preventDefault();
                 login();
             }}
-            class="flex flex-col gap-4"
         >
-            <div>
-                <Label for="username" class="mb-2">用户名</Label>
+            <h1 class="text-xl font-medium text-gray-900 dark:text-white">登录 PodCast Proxy</h1>
+            <Label class="space-y-2">
+                <span>用户名</span>
                 <Input
-                    id="username"
                     type="text"
                     placeholder="admin"
                     bind:value={username}
                     disabled={loading}
                     autocomplete="username"
                 />
-            </div>
-            <div>
-                <Label for="password" class="mb-2">密码</Label>
+            </Label>
+            <Label class="space-y-2">
+                <span>密码</span>
                 <Input
-                    id="password"
                     type="password"
                     placeholder="••••••••"
                     bind:value={password}
                     disabled={loading}
                     autocomplete="current-password"
                 />
-            </div>
+            </Label>
             {#if errorMsg}
                 <p class="text-sm text-red-500">{errorMsg}</p>
             {/if}

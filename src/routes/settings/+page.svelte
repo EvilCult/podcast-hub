@@ -139,82 +139,113 @@
     }
 </script>
 
-<div class="mx-auto flex max-w-2xl flex-col gap-6 p-4">
-    <h1 class="text-xl font-semibold text-gray-900 dark:text-white">设置</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400">
-        当前用户：<span class="font-medium">{me.username}</span>
-        {#if me.isAdmin}<span class="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900 dark:text-amber-200">管理员</span>{/if}
-    </p>
-
-    <Card class="w-full max-w-none">
-        <h2 class="mb-4 text-base font-medium text-gray-900 dark:text-white">转码档位</h2>
-        <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-            Web 播放全部走转码。若源文件码率已低于所选档位，则直接使用源流，不做无用转码。
+<div class="mx-auto max-w-2xl p-4">
+    <div class="mb-6 flex flex-col space-y-2">
+        <h1 class="text-xl font-medium text-gray-900 dark:text-white">设置</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+            当前用户：<span class="font-medium">{me.username}</span>
+            {#if me.isAdmin}<span
+                    class="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                    >管理员</span
+                >{/if}
         </p>
-        <div class="flex flex-col gap-4">
-            <div>
-                <Label for="preset" class="mb-2">档位</Label>
-                <Select id="preset" bind:value={preset} disabled={presetLoading}>
-                    {#each TIER_OPTIONS as opt}
-                        <option value={opt.name}>{opt.label}（{opt.desc}）</option>
-                    {/each}
-                </Select>
-            </div>
-            {#if presetMsg}<p class="text-sm text-gray-500 dark:text-gray-400">{presetMsg}</p>{/if}
-            <div><Button color="primary" onclick={savePreset} disabled={presetLoading}>保存</Button></div>
-        </div>
-    </Card>
+    </div>
 
-    <Card class="w-full max-w-none">
-        <h2 class="mb-4 text-base font-medium text-gray-900 dark:text-white">修改密码</h2>
-        <div class="flex flex-col gap-4">
-            <div>
-                <Label for="oldpw" class="mb-2">原密码</Label>
-                <Input id="oldpw" type="password" bind:value={oldPassword} disabled={pwLoading} />
-            </div>
-            <div>
-                <Label for="newpw" class="mb-2">新密码</Label>
-                <Input id="newpw" type="password" bind:value={newPassword} disabled={pwLoading} />
-            </div>
-            <div>
-                <Label for="confirmpw" class="mb-2">确认新密码</Label>
-                <Input id="confirmpw" type="password" bind:value={confirmPassword} disabled={pwLoading} />
-            </div>
-            {#if pwMsg}<p class="text-sm {pwOk ? 'text-green-600' : 'text-red-500'}">{pwMsg}</p>{/if}
-            <div><Button color="primary" onclick={changePassword} disabled={pwLoading}>修改密码</Button></div>
-        </div>
-    </Card>
-
-    {#if me.isAdmin}
-        <Card class="w-full max-w-none">
-            <h2 class="mb-4 text-base font-medium text-gray-900 dark:text-white">用户管理</h2>
-            <div class="mb-6 flex flex-col gap-2">
-                {#each users as u}
-                    <div class="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-2 dark:border-gray-700">
-                        <div class="text-sm">
-                            <span class="font-medium text-gray-900 dark:text-white">{u.username}</span>
-                            <span class="ml-2 text-gray-500 dark:text-gray-400">id={u.id}</span>
-                            {#if u.id === 1}<span class="ml-2 text-xs text-amber-600">管理员</span>{/if}
-                        </div>
-                        {#if u.id !== 1}
-                            <Button size="xs" color="red" onclick={() => deleteUser(u.id, u.username)}>删除</Button>
-                        {/if}
-                    </div>
-                {/each}
-            </div>
-            <h3 class="mb-2 text-sm font-medium text-gray-900 dark:text-white">添加用户</h3>
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
-                <div class="flex-1">
-                    <Label for="newuser" class="mb-2">用户名</Label>
-                    <Input id="newuser" type="text" bind:value={newUsername} disabled={userLoading} />
-                </div>
-                <div class="flex-1">
-                    <Label for="newuserpw" class="mb-2">密码</Label>
-                    <Input id="newuserpw" type="text" bind:value={newUserPassword} disabled={userLoading} />
-                </div>
-                <div><Button color="primary" onclick={addUser} disabled={userLoading}>添加</Button></div>
-            </div>
-            {#if userMsg}<p class="mt-2 text-sm text-red-500">{userMsg}</p>{/if}
+    <div class="flex flex-col space-y-6">
+        <Card class="w-full max-w-none p-4 sm:p-6 md:p-8">
+            <form
+                class="flex flex-col space-y-6"
+                onsubmit={(e) => {
+                    e.preventDefault();
+                    savePreset();
+                }}
+            >
+                <h2 class="text-xl font-medium text-gray-900 dark:text-white">转码档位</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Web 播放全部走转码。若源文件码率已低于所选档位，则直接使用源流，不做无用转码。
+                </p>
+                <Label class="space-y-2">
+                    <span>档位</span>
+                    <Select bind:value={preset} disabled={presetLoading}>
+                        {#each TIER_OPTIONS as opt}
+                            <option value={opt.name}>{opt.label}（{opt.desc}）</option>
+                        {/each}
+                    </Select>
+                </Label>
+                {#if presetMsg}<p class="text-sm text-gray-500 dark:text-gray-400">{presetMsg}</p>{/if}
+                <Button type="submit" color="primary" disabled={presetLoading}>保存</Button>
+            </form>
         </Card>
-    {/if}
+
+        <Card class="w-full max-w-none p-4 sm:p-6 md:p-8">
+            <form
+                class="flex flex-col space-y-6"
+                onsubmit={(e) => {
+                    e.preventDefault();
+                    changePassword();
+                }}
+            >
+                <h2 class="text-xl font-medium text-gray-900 dark:text-white">修改密码</h2>
+                <Label class="space-y-2">
+                    <span>原密码</span>
+                    <Input type="password" bind:value={oldPassword} disabled={pwLoading} />
+                </Label>
+                <Label class="space-y-2">
+                    <span>新密码</span>
+                    <Input type="password" bind:value={newPassword} disabled={pwLoading} />
+                </Label>
+                <Label class="space-y-2">
+                    <span>确认新密码</span>
+                    <Input type="password" bind:value={confirmPassword} disabled={pwLoading} />
+                </Label>
+                {#if pwMsg}<p class="text-sm {pwOk ? 'text-green-600' : 'text-red-500'}">{pwMsg}</p>{/if}
+                <Button type="submit" color="primary" disabled={pwLoading}>修改密码</Button>
+            </form>
+        </Card>
+
+        {#if me.isAdmin}
+            <Card class="w-full max-w-none p-4 sm:p-6 md:p-8">
+                <div class="flex flex-col space-y-6">
+                    <h2 class="text-xl font-medium text-gray-900 dark:text-white">用户管理</h2>
+                    <div class="flex flex-col space-y-2">
+                        {#each users as u}
+                            <div
+                                class="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700"
+                            >
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-900 dark:text-white">{u.username}</span>
+                                    <span class="ml-2 text-gray-500 dark:text-gray-400">id={u.id}</span>
+                                    {#if u.id === 1}<span class="ml-2 text-xs text-amber-600">管理员</span>{/if}
+                                </div>
+                                {#if u.id !== 1}
+                                    <Button size="xs" color="red" onclick={() => deleteUser(u.id, u.username)}
+                                        >删除</Button
+                                    >
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                    <form
+                        class="flex flex-col space-y-6"
+                        onsubmit={(e) => {
+                            e.preventDefault();
+                            addUser();
+                        }}
+                    >
+                        <h3 class="text-base font-medium text-gray-900 dark:text-white">添加用户</h3>
+                        <Label class="space-y-2">
+                            <span>用户名</span>
+                            <Input type="text" bind:value={newUsername} disabled={userLoading} />
+                        </Label>
+                        <Label class="space-y-2">
+                            <span>密码</span>
+                            <Input type="text" bind:value={newUserPassword} disabled={userLoading} />
+                        </Label>
+                        {#if userMsg}<p class="text-sm text-red-500">{userMsg}</p>{/if}
+                        <Button type="submit" color="primary" disabled={userLoading}>添加</Button>
+                    </form>
+                </div>
+            </Card>
+        {/if}
+    </div>
 </div>
