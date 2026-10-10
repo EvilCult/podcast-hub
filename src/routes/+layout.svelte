@@ -35,16 +35,22 @@
     <NavHamburger />
     {#if data.user}
         <NavUl>
-            <NavLi class="cursor-pointer">
+            <!-- Desktop: user dropdown -->
+            <NavLi class="hidden cursor-pointer md:block">
                 {data.user.username}<ChevronDownOutline class="ms-2 inline h-6 w-6" />
             </NavLi>
-            <Dropdown simple class="w-44">
+            <Dropdown simple class="hidden w-44 md:block">
                 <DropdownItem href="/history">History</DropdownItem>
                 <DropdownItem href="/fav">Fav</DropdownItem>
                 <DropdownItem href="/settings">Settings</DropdownItem>
                 <DropdownDivider />
                 <DropdownItem onclick={logout}>登出</DropdownItem>
             </Dropdown>
+            <!-- Mobile: plain items inside the folded hamburger menu -->
+            <NavLi href="/history" class="md:hidden">History</NavLi>
+            <NavLi href="/fav" class="md:hidden">Fav</NavLi>
+            <NavLi href="/settings" class="md:hidden">Settings</NavLi>
+            <NavLi class="cursor-pointer md:hidden" onclick={logout}>登出</NavLi>
         </NavUl>
     {/if}
 </Navbar>
