@@ -4,14 +4,17 @@ import { getHistoryEpisodes } from '$lib/server/repos/history';
 
 // GET /api/history?p=1&ps=10 -> episodes with listening history,
 // most recently played first
-export function GET({ url }: RequestEvent) {
+export function GET({ url, locals }: RequestEvent) {
     const page = Number(url.searchParams.get('p') ?? 1);
     const pageSize = Number(url.searchParams.get('ps') ?? 10);
     if (!Number.isInteger(page) || !Number.isInteger(pageSize) || page < 1 || pageSize < 1) {
         return json({ error: 'Invalid url params' }, { status: 400 });
     }
+    if (!locals.user) {
+        return json({ error: 'Login required' }, { status: 401 });
+    }
 
-    const rows = getHistoryEpisodes(page, pageSize);
+    const rows = getHistoryEpisodes(page, pageSize, locals.user.id);
     return json({
         data: rows.map((row) => ({
             id: row.id,

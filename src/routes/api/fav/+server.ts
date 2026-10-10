@@ -17,13 +17,16 @@ async function parseEpisodeId(request: Request): Promise<number | undefined> {
 }
 
 // GET /api/fav?p=1&ps=10 -> paginated favorite episodes, newest first
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
     const page = Number(url.searchParams.get('p') ?? 1);
     const pageSize = Number(url.searchParams.get('ps') ?? 10);
     if (!Number.isInteger(page) || !Number.isInteger(pageSize) || page < 1 || pageSize < 1) {
         return json({ error: 'Invalid url params' }, { status: 400 });
     }
-    const rows = getFavEpisodes(page, pageSize);
+    if (!locals.user) {
+        return json({ error: 'Login required' }, { status: 401 });
+    }
+    const rows = getFavEpisodes(page, pageSize, locals.user.id);
     return json({
         data: rows.map((row) => ({
             id: row.id,
@@ -47,24 +50,30 @@ function invalidEpisode() {
 }
 
 // PUT /api/fav  { "episode": 123 }  -> add to favorites (idempotent)
-export const PUT: RequestHandler = async ({ request }) => {
+export const PUT: RequestHandler = async ({ request, locals }) => {
     const eid = await parseEpisodeId(request);
     if (eid === undefined) {
         return invalidEpisode();
+    }
+    if (!locals.user) {
+        return json({ error: 'Login required' }, { status: 401 });
     }
     if (!getById('episodes', eid)) {
         return json({ error: `Episode ${eid} not found` }, { status: 404 });
     }
-    const added = addFav(eid);
+    const added = addFav(eid, locals.user.id);
     return json({ episode: eid, favorited: true, added });
 };
 
 // DELETE /api/fav  { "episode": 123 }  -> remove from favorites (idempotent)
-export const DELETE: RequestHandler = async ({ request }) => {
+export const DELETE: RequestHandler = async ({ request, locals }) => {
     const eid = await parseEpisodeId(request);
     if (eid === undefined) {
         return invalidEpisode();
     }
-    const removed = removeFav(eid);
+    if (!locals.user) {
+        return json({ error: 'Login required' }, { status: 401 });
+    }
+    const removed = removeFav(eid, locals.user.id);
     return json({ episode: eid, favorited: false, removed });
 };

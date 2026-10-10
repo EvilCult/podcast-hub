@@ -41,4 +41,12 @@ CREATE TABLE IF NOT EXISTS fav (
     created_at INTEGER
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fav_uid_eid ON fav (uid, eid);
+
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    tr_preset TEXT NOT NULL DEFAULT 'standard',
+    created_at INTEGER NOT NULL
+);
 `;

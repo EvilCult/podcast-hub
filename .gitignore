@@ -28,3 +28,4 @@ data/*.db
 data/*.db-*
 data/*.sqlite
 data/*.sqlite-*
+data/jwt_secret
