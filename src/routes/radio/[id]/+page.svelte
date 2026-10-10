@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button, Avatar, Spinner } from 'flowbite-svelte';
-    import { PlaySolid, TrashBinOutline } from 'flowbite-svelte-icons';
+    import { PlaySolid, TrashBinOutline, ArrowUpOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
     import EpisodeRow, { type RowEpisode } from '$lib/components/EpisodeRow.svelte';
@@ -13,16 +13,43 @@
     let page = $state(1);
     let loading = $state(false);
     let hasMore = $state(true);
+    let sortAsc = $state(false); // false = newest first (default), true = oldest first
 
     // (re)load when navigating between radios
     $effect(() => {
         episodes = ((data.episodes ?? []) as RowEpisode[]).map((ep) => ({ ...ep }));
         page = 1;
         hasMore = true;
+        sortAsc = false;
     });
+
+    function toggleSort() {
+        sortAsc = !sortAsc;
+        void reloadEpisodes();
+    }
+
+    async function reloadEpisodes() {
+        if (loading) return;
+        loading = true;
+        const res = await fetch(`/api/radio/${radio.id}/episodes?p=1&order=${sortAsc ? 'asc' : 'desc'}`);
+        loading = false;
+        if (!res.ok) return;
+        const result = await res.json();
+        episodes = (result.data as RowEpisode[]).map((ep) => ({ ...ep }));
+        page = 1;
+        hasMore = result.data.length > 0;
+    }
 
     function play(item: RowEpisode) {
         void playEpisode(item as PlayerEpisode, radio);
+    }
+
+    // last_update is a unix timestamp in seconds -> yyyy-mm-dd hh:mm:ss
+    function fmtTs(ts: number | null | undefined) {
+        if (!ts) return '—';
+        const d = new Date(ts * 1000);
+        const p = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
     }
 
     async function toggleFav(ep: RowEpisode) {
@@ -48,7 +75,9 @@
         loading = true;
 
         const nextPage = page + 1;
-        const res = await fetch(`/api/radio/${radio.id}/episodes?p=${nextPage}`);
+        const res = await fetch(
+            `/api/radio/${radio.id}/episodes?p=${nextPage}&order=${sortAsc ? 'asc' : 'desc'}`
+        );
 
         if (!res.ok) {
             loading = false;
@@ -107,16 +136,33 @@
             >
                 {data.radio.digest}
             </div>
-            <div class="mt-2 text-xs text-gray-400">最后更新: {data.radio.last_update}</div>
+            <div class="mt-2 text-xs text-gray-400">最后更新: {fmtTs(data.radio.last_update)}</div>
             <div class="mt-4 flex items-center gap-2">
                 <Button pill onclick={() => episodes[0] && play(episodes[0])}
                     >Play <PlaySolid class="ml-2" /></Button
                 >
-                <Button pill outline={true} class="size-8 p-2!">
-                    <TrashBinOutline
-                        class="size-5 text-primary-700"
-                        onclick={() => (popupModal = true)}
-                    />
+                <Button
+                    pill
+                    outline
+                    color="dark"
+                    title="切换单集排序"
+                    onclick={toggleSort}
+                >
+                    {sortAsc ? 'Oldest first' : 'Newest first'}
+                    {#if sortAsc}
+                        <ArrowUpOutline class="ms-2 h-5 w-5" />
+                    {:else}
+                        <ArrowDownOutline class="ms-2 h-5 w-5" />
+                    {/if}
+                </Button>
+                <Button
+                    pill
+                    outline={true}
+                    class="ml-auto size-8 p-2!"
+                    title="删除播客"
+                    onclick={() => (popupModal = true)}
+                >
+                    <TrashBinOutline class="size-5 text-primary-700" />
                 </Button>
             </div>
         </div>

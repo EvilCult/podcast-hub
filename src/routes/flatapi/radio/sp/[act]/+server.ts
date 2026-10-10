@@ -15,12 +15,14 @@ export function GET({ params, url }: RequestEvent) {
 
     let rows;
 
+    // Device traffic is unauthenticated by design; it always reads the
+    // admin's (uid 1) data. flatapi never depends on the web app's auth.
     if (action == 'fav') {
-        rows = getFavEpisodes(page, pageSize);
+        rows = getFavEpisodes(page, pageSize, 1);
     }
 
     if (action == 'history') {
-        rows = getHistoryEpisodes(page, pageSize);
+        rows = getHistoryEpisodes(page, pageSize, 1);
     }
 
     if (!rows) {

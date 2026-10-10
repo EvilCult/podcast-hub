@@ -6,11 +6,15 @@ export function GET({ params, url }: RequestEvent) {
     const radio_id = Number(params.id);
     const page = Number(url.searchParams.get('p') ?? 1);
     const pageSize = Number(url.searchParams.get('ps') ?? 10);
+    const order = url.searchParams.get('order') ?? 'desc';
     if (Number.isNaN(radio_id) || Number.isNaN(page) || Number.isNaN(pageSize)) {
         return json({ error: 'Invalid url params' }, { status: 400 });
     }
+    if (order !== 'asc' && order !== 'desc') {
+        return json({ error: 'Invalid order param' }, { status: 400 });
+    }
 
-    const rows = getEpisodeListByRadioId(radio_id, page, pageSize);
+    const rows = getEpisodeListByRadioId(radio_id, page, pageSize, order !== 'asc');
     if (!rows) {
         return json({ error: 'Radio not found' }, { status: 404 });
     }
