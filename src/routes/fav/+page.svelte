@@ -36,6 +36,17 @@
         }
     }
 
+    async function markListened(ep: RowEpisode) {
+        if (!ep.duration || ep.duration <= 0) return;
+        const res = await fetch(`/api/episode/${ep.id}/history`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pos: ep.duration })
+        });
+        if (!res.ok) return;
+        episodes = episodes.map((e) => (e.id === ep.id ? { ...e, pos: ep.duration } : e));
+    }
+
     async function deleteEpisode(ep: RowEpisode) {
         const res = await fetch(`/api/episode/${ep.id}`, { method: 'DELETE' });
         if (!res.ok) return;
@@ -97,6 +108,7 @@
             onPlay={play}
             onToggleFav={toggleFav}
             onDelete={deleteEpisode}
+            onMarkListened={markListened}
         />
     {/each}
     <div id="load-more" class=""></div>

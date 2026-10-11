@@ -23,6 +23,7 @@
         onPlay: (ep: RowEpisode) => void;
         onToggleFav: (ep: RowEpisode) => void;
         onDelete: (ep: RowEpisode) => void;
+        onMarkListened: (ep: RowEpisode) => void;
     };
 
     let {
@@ -32,7 +33,8 @@
         canDelete = false,
         onPlay,
         onToggleFav,
-        onDelete
+        onDelete,
+        onMarkListened
     }: Props = $props();
 
     let menuOpen = $state(false);
@@ -164,6 +166,18 @@
                 >
                     {episode.is_fav ? '取消收藏' : '收藏'}
                 </button>
+                {#if !played}
+                    <button
+                        type="button"
+                        class="block w-full px-4 py-2.5 text-left text-sm text-gray-700 active:bg-gray-100 dark:text-gray-200 dark:active:bg-gray-700"
+                        onclick={() => {
+                            menuOpen = false;
+                            onMarkListened(episode);
+                        }}
+                    >
+                        标记为已听
+                    </button>
+                {/if}
                 {#if canDelete}
                     <button
                         type="button"
