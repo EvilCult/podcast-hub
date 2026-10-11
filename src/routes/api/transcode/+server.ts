@@ -11,6 +11,7 @@ import {
 import { isTierName } from '$lib/tiers';
 import { INTERNAL_AUDIO_KEY, proxyAudioResponse } from '$lib/server/audio';
 import { getUserById } from '$lib/server/repos/user';
+import { dev } from '$app/environment';
 
 const execFileAsync = promisify(execFile);
 
@@ -35,10 +36,15 @@ async function probeFormatNumber(targetUrl: string, entry: string): Promise<numb
 
 // ffmpeg/ffprobe pull the source through the app's proxy-aware fetch via the
 // key-gated internal /api/audio hop (subprocesses can't use our undici proxy).
-// Built from the request's own origin: works in dev, Docker and behind reverse
-// proxies without depending on the build-time PUBLIC_API_URL.
-const internalAudioUrl = (requestUrl: URL, audioUrl: string) =>
-    `${requestUrl.origin}/api/audio?url=${encodeURIComponent(audioUrl)}&key=${INTERNAL_AUDIO_KEY}`;
+// The hop must use plain HTTP to the app's own port: the external origin may
+// be HTTPS (reverse proxy / tunnel terminates TLS), which the app itself
+// doesn't serve -- ffmpeg would fail with "unexpected TLS packet".
+const internalAudioUrl = (requestUrl: URL, audioUrl: string) => {
+    const base = dev
+        ? requestUrl.origin // vite dev: plain HTTP on localhost, no TLS involved
+        : `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
+    return `${base}/api/audio?url=${encodeURIComponent(audioUrl)}&key=${INTERNAL_AUDIO_KEY}`;
+};
 
 export async function GET({ url, request, fetch, locals }: RequestEvent) {
     const audioUrl = url.searchParams.get('url');
