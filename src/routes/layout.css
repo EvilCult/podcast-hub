@@ -37,3 +37,12 @@
         display: none;
     }
 }
+
+/* Focus rings only for keyboard navigation (:focus-visible).
+   Mouse/touch clicks also give focus, but shouldn't leave a ring behind. */
+:focus:not(:focus-visible) {
+    outline: none;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-inset-ring-shadow: 0 0 #0000;
+}
