@@ -19,6 +19,7 @@
         episode: RowEpisode;
         showRadio?: boolean;
         showPlayTime?: boolean;
+        canDelete?: boolean;
         onPlay: (ep: RowEpisode) => void;
         onToggleFav: (ep: RowEpisode) => void;
         onDelete: (ep: RowEpisode) => void;
@@ -28,6 +29,7 @@
         episode,
         showRadio = false,
         showPlayTime = false,
+        canDelete = false,
         onPlay,
         onToggleFav,
         onDelete
@@ -162,16 +164,18 @@
                 >
                     {episode.is_fav ? '取消收藏' : '收藏'}
                 </button>
-                <button
-                    type="button"
-                    class="block w-full px-4 py-2.5 text-left text-sm text-red-600 active:bg-gray-100 dark:text-red-400 dark:active:bg-gray-700"
-                    onclick={() => {
-                        menuOpen = false;
-                        onDelete(episode);
-                    }}
-                >
-                    删除
-                </button>
+                {#if canDelete}
+                    <button
+                        type="button"
+                        class="block w-full px-4 py-2.5 text-left text-sm text-red-600 active:bg-gray-100 dark:text-red-400 dark:active:bg-gray-700"
+                        onclick={() => {
+                            menuOpen = false;
+                            onDelete(episode);
+                        }}
+                    >
+                        删除
+                    </button>
+                {/if}
             </div>
         {/if}
     </div>

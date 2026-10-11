@@ -89,6 +89,7 @@
             {episode}
             showRadio
             showPlayTime
+            canDelete={data.user?.id === 1}
             onPlay={play}
             onToggleFav={toggleFav}
             onDelete={deleteEpisode}

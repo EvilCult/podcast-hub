@@ -173,6 +173,7 @@
     {#each episodes as episode (episode.id)}
         <EpisodeRow
             {episode}
+            canDelete={data.user?.id === 1}
             onPlay={play}
             onToggleFav={toggleFav}
             onDelete={deleteEpisode}
