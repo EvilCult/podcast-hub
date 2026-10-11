@@ -15,18 +15,34 @@ import { dev } from '$app/environment';
 
 const execFileAsync = promisify(execFile);
 
-/** ffprobe a numeric format entry (duration, bit_rate). Null when unavailable. */
-async function probeFormatNumber(targetUrl: string, entry: string): Promise<number | null> {
+/**
+ * ffprobe a numeric format entry (duration, bit_rate). Null when unavailable.
+ * Bounded by timeout so a slow source can't hold the response headers
+ * hostage (tunnels/proxies enforce time-to-first-byte limits).
+ */
+async function probeFormatNumber(
+    targetUrl: string,
+    entry: string,
+    timeoutMs = 15000
+): Promise<number | null> {
     try {
-        const { stdout } = await execFileAsync('ffprobe', [
-            '-v',
-            'error',
-            '-show_entries',
-            `format=${entry}`,
-            '-of',
-            'default=noprint_wrappers=1:nokey=1',
-            targetUrl
-        ]);
+        const { stdout } = await execFileAsync(
+            'ffprobe',
+            [
+                '-v',
+                'error',
+                '-analyzeduration',
+                '5000000',
+                '-probesize',
+                '5000000',
+                '-show_entries',
+                `format=${entry}`,
+                '-of',
+                'default=noprint_wrappers=1:nokey=1',
+                targetUrl
+            ],
+            { timeout: timeoutMs }
+        );
         const v = parseFloat(stdout.trim());
         return Number.isNaN(v) ? null : v;
     } catch {
@@ -59,6 +75,9 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     // - otherwise -> 401
     let profile: TranscodeProfile;
     const user = locals.user;
+    // Duration probed alongside bitrate for logged-in users (parallel, see
+    // below); anonymous device profiles probe it separately after.
+    let probedDuration: number | null = null;
 
     if (user) {
         const row = getUserById(user.id);
@@ -69,7 +88,13 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         }
         const target = TIER_PROFILES[tier];
         const hopUrl = internalAudioUrl(url, audioUrl);
-        const bitRateBps = await probeFormatNumber(hopUrl, 'bit_rate');
+        // Probe bitrate + duration in parallel: each is timeout-bounded, so
+        // time-to-first-byte is max(probe) instead of sum(probe).
+        const [bitRateBps, durationVal] = await Promise.all([
+            probeFormatNumber(hopUrl, 'bit_rate'),
+            probeFormatNumber(hopUrl, 'duration')
+        ]);
+        probedDuration = durationVal;
         const srcBr = bitRateBps === null ? null : Math.round(bitRateBps / 1000);
         if (srcBr === null) {
             // Source quality unknown: cap at standard, never upscale blindly.
@@ -96,7 +121,10 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
 
     const hopUrl = internalAudioUrl(url, audioUrl);
 
-    const duration = (await probeFormatNumber(hopUrl, 'duration')) ?? 0;
+    // Logged-in users already probed duration in parallel above; anonymous
+    // device profiles (explicit sr/br/ch) probe it here.
+    const duration =
+        probedDuration ?? (await probeFormatNumber(hopUrl, 'duration')) ?? 0;
     const totalBytes = duration > 0 ? Math.floor(duration * bytesPerSecond) : 0;
 
     const rangeHeader = request.headers.get('range');
