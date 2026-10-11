@@ -136,15 +136,21 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
 
     const ffmpegProcess = spawn('ffmpeg', ffmpegArgs);
 
-    // ffmpegProcess.stderr.on('data', (data) => {
-    //     console.log(`ffmpeg: ${data}`);
-    // });
+    let isControllerClosed = false;
+
+    ffmpegProcess.stderr.on('data', (data) => {
+        console.error(`ffmpeg[${profile.sr}Hz/${profile.br}k]: ${data.toString().trim()}`);
+    });
 
     ffmpegProcess.on('error', (err) => {
         console.error('Failed to start ffmpeg process:', err);
     });
 
-    let isControllerClosed = false;
+    ffmpegProcess.on('close', (code) => {
+        if (code !== 0 && !isControllerClosed) {
+            console.error(`ffmpeg exited with code ${code} for ${audioUrl.slice(0, 80)}`);
+        }
+    });
 
     const stream = new ReadableStream({
         start(controller) {
