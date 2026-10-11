@@ -12,7 +12,8 @@ export function GET({ params, url }: RequestEvent) {
         return json({ error: 'Invalid url params' }, { status: 400 });
     }
 
-    const rows = getEpisodeListByRadioId(radio_id, page, pageSize, false, true);
+    // Device traffic is unauthenticated by design; it always reads the admin's (uid 1) data.
+    const rows = getEpisodeListByRadioId(radio_id, page, pageSize, false, true, 1);
     if (!rows) {
         return json({ error: 'Radio not found' }, { status: 404 });
     }

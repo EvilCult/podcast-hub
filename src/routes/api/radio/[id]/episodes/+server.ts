@@ -2,7 +2,7 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 
 import { getEpisodeListByRadioId } from '$lib/server/repos/episode';
 
-export function GET({ params, url }: RequestEvent) {
+export function GET({ params, url, locals }: RequestEvent) {
     const radio_id = Number(params.id);
     const page = Number(url.searchParams.get('p') ?? 1);
     const pageSize = Number(url.searchParams.get('ps') ?? 10);
@@ -14,7 +14,14 @@ export function GET({ params, url }: RequestEvent) {
         return json({ error: 'Invalid order param' }, { status: 400 });
     }
 
-    const rows = getEpisodeListByRadioId(radio_id, page, pageSize, order !== 'asc');
+    const rows = getEpisodeListByRadioId(
+        radio_id,
+        page,
+        pageSize,
+        order !== 'asc',
+        false,
+        locals.user?.id ?? 0
+    );
     if (!rows) {
         return json({ error: 'Radio not found' }, { status: 404 });
     }
