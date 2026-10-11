@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { Button } from 'flowbite-svelte';
+    import { Button, Spinner } from 'flowbite-svelte';
     import {
         PauseSolid,
         PlaySolid,
@@ -41,7 +41,7 @@
     class="fixed bottom-0 left-0 z-50 w-full border-t border-gray-500 bg-gray-100 px-3 py-2 md:grid md:h-24 md:grid-cols-[auto_1fr_auto] md:items-center md:gap-6 md:px-6 dark:bg-gray-800 dark:text-gray-200"
 >
     <!-- 封面 -->
-    <div class="hidden items-center md:flex">
+    <div class="relative hidden items-center md:flex">
         {#if player.episode && player.radio?.cover}
             <img
                 class="size-12 rounded object-cover"
@@ -53,6 +53,13 @@
                 class="flex size-12 items-center justify-center rounded bg-gray-300 dark:bg-gray-700"
             >
                 <MusicOutline class="size-6 text-gray-500 dark:text-gray-400" />
+            </div>
+        {/if}
+        {#if player.loading && hasEpisode}
+            <div
+                class="absolute inset-0 flex items-center justify-center rounded bg-black/40"
+            >
+                <Spinner class="size-6 text-white" />
             </div>
         {/if}
     </div>
@@ -101,7 +108,9 @@
             disabled={!hasEpisode}
             onclick={togglePlay}
         >
-            {#if player.playing}
+            {#if player.loading && hasEpisode}
+                <Spinner class="size-5" />
+            {:else if player.playing}
                 <PauseSolid />
             {:else}
                 <PlaySolid />

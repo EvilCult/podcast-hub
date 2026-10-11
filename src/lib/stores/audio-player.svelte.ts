@@ -113,7 +113,11 @@ export function attachAudio(element: HTMLAudioElement) {
     });
 
     audio.addEventListener('loadedmetadata', () => {
-        player.duration = audio?.duration || player.episode?.duration || 0;
+        // Transcoded streams report duration as Infinity/NaN (no metadata);
+        // prefer the DB duration which is always reliable.
+        const audioDuration =
+            audio?.duration && Number.isFinite(audio.duration) ? audio.duration : 0;
+        player.duration = player.episode?.duration || audioDuration || 0;
     });
 
     audio.addEventListener('error', () => {
