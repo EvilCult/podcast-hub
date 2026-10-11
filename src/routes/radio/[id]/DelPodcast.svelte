@@ -48,6 +48,9 @@
 </script>
 
 <Modal form bind:open={popupModal} size="xs" transition={slide} permanent>
+    <!-- Focus sink: see AddPodcast.svelte -- Flowbite Dialog auto-focus would
+         otherwise pre-select the confirm button on open. -->
+    <div tabindex="-1" data-autofocus class="outline-none" aria-hidden="true"></div>
     <div class="text-center">
         <ExclamationCircleOutline class="mx-auto mb-4 h-12 w-12 text-gray-400 dark:text-gray-200" />
         <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
