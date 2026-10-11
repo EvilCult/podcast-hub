@@ -1,6 +1,11 @@
 <script lang="ts">
     import { Button, Avatar, Spinner } from 'flowbite-svelte';
-    import { PlaySolid, TrashBinOutline, ArrowUpOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
+    import {
+        PlaySolid,
+        TrashBinOutline,
+        ArrowUpOutline,
+        ArrowDownOutline
+    } from 'flowbite-svelte-icons';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
     import EpisodeRow, { type RowEpisode } from '$lib/components/EpisodeRow.svelte';
@@ -31,7 +36,9 @@
     async function reloadEpisodes() {
         if (loading) return;
         loading = true;
-        const res = await fetch(`/api/radio/${radio.id}/episodes?p=1&order=${sortAsc ? 'asc' : 'desc'}`);
+        const res = await fetch(
+            `/api/radio/${radio.id}/episodes?p=1&order=${sortAsc ? 'asc' : 'desc'}`
+        );
         loading = false;
         if (!res.ok) return;
         const result = await res.json();
@@ -138,7 +145,7 @@
             cornerStyle="rounded"
             class="size-30 sm:size-30 md:size-48"
         />
-        <div class="mt-4 space-y-1 font-medium dark:text-white">
+        <div class="mt-4 w-full space-y-1 font-medium dark:text-white">
             <div class="text-2xl">
                 {radio.title}
             </div>
@@ -148,18 +155,12 @@
                 {data.radio.digest}
             </div>
             <div class="mt-2 text-xs text-gray-400">最后更新: {fmtTs(data.radio.last_update)}</div>
-            <div class="mt-4 flex items-center justify-between gap-2">
+            <div class="mt-4 flex w-full items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                     <Button pill onclick={() => episodes[0] && play(episodes[0])}
                         >Play <PlaySolid class="ml-2" /></Button
                     >
-                    <Button
-                        pill
-                        outline
-                        color="dark"
-                        title="切换单集排序"
-                        onclick={toggleSort}
-                    >
+                    <Button pill outline color="dark" title="切换单集排序" onclick={toggleSort}>
                         {sortAsc ? 'Oldest' : 'Newest'}
                         {#if sortAsc}
                             <ArrowUpOutline class="ms-2 h-5 w-5" />
