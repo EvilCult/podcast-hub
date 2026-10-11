@@ -4,7 +4,9 @@
         PlaySolid,
         TrashBinOutline,
         ArrowUpOutline,
-        ArrowDownOutline
+        ArrowDownOutline,
+        EyeOutline,
+        EyeSlashOutline
     } from 'flowbite-svelte-icons';
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
@@ -19,6 +21,7 @@
     let loading = $state(false);
     let hasMore = $state(true);
     let sortAsc = $state(false); // false = newest first (default), true = oldest first
+    let hidePlayed = $state(false);
 
     // (re)load when navigating between radios
     $effect(() => {
@@ -26,6 +29,7 @@
         page = 1;
         hasMore = true;
         sortAsc = false;
+        hidePlayed = false;
     });
 
     function toggleSort() {
@@ -33,11 +37,16 @@
         void reloadEpisodes();
     }
 
+    function toggleHidePlayed() {
+        hidePlayed = !hidePlayed;
+        void reloadEpisodes();
+    }
+
     async function reloadEpisodes() {
         if (loading) return;
         loading = true;
         const res = await fetch(
-            `/api/radio/${radio.id}/episodes?p=1&order=${sortAsc ? 'asc' : 'desc'}`
+            `/api/radio/${radio.id}/episodes?p=1&order=${sortAsc ? 'asc' : 'desc'}&hide_played=${hidePlayed ? '1' : '0'}`
         );
         loading = false;
         if (!res.ok) return;
@@ -94,7 +103,7 @@
 
         const nextPage = page + 1;
         const res = await fetch(
-            `/api/radio/${radio.id}/episodes?p=${nextPage}&order=${sortAsc ? 'asc' : 'desc'}`
+            `/api/radio/${radio.id}/episodes?p=${nextPage}&order=${sortAsc ? 'asc' : 'desc'}&hide_played=${hidePlayed ? '1' : '0'}`
         );
 
         if (!res.ok) {
@@ -166,6 +175,19 @@
                             <ArrowUpOutline class="ms-2 h-5 w-5" />
                         {:else}
                             <ArrowDownOutline class="ms-2 h-5 w-5" />
+                        {/if}
+                    </Button>
+                    <Button
+                        pill
+                        outline={true}
+                        class="size-8 p-2!"
+                        title={hidePlayed ? '显示已听单集' : '隐藏已听单集'}
+                        onclick={toggleHidePlayed}
+                    >
+                        {#if hidePlayed}
+                            <EyeSlashOutline class="size-5 text-gray-500 dark:text-gray-400" />
+                        {:else}
+                            <EyeOutline class="size-5 text-gray-500 dark:text-gray-400" />
                         {/if}
                     </Button>
                 </div>
