@@ -148,28 +148,30 @@
                 {data.radio.digest}
             </div>
             <div class="mt-2 text-xs text-gray-400">最后更新: {fmtTs(data.radio.last_update)}</div>
-            <div class="mt-4 flex items-center gap-2">
-                <Button pill onclick={() => episodes[0] && play(episodes[0])}
-                    >Play <PlaySolid class="ml-2" /></Button
-                >
-                <Button
-                    pill
-                    outline
-                    color="dark"
-                    title="切换单集排序"
-                    onclick={toggleSort}
-                >
-                    {sortAsc ? 'Oldest' : 'Newest'}
-                    {#if sortAsc}
-                        <ArrowUpOutline class="ms-2 h-5 w-5" />
-                    {:else}
-                        <ArrowDownOutline class="ms-2 h-5 w-5" />
-                    {/if}
-                </Button>
+            <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <Button pill onclick={() => episodes[0] && play(episodes[0])}
+                        >Play <PlaySolid class="ml-2" /></Button
+                    >
+                    <Button
+                        pill
+                        outline
+                        color="dark"
+                        title="切换单集排序"
+                        onclick={toggleSort}
+                    >
+                        {sortAsc ? 'Oldest' : 'Newest'}
+                        {#if sortAsc}
+                            <ArrowUpOutline class="ms-2 h-5 w-5" />
+                        {:else}
+                            <ArrowDownOutline class="ms-2 h-5 w-5" />
+                        {/if}
+                    </Button>
+                </div>
                 <Button
                     pill
                     outline={true}
-                    class="ml-auto size-8 p-2!"
+                    class="size-8 p-2!"
                     title="删除播客"
                     onclick={() => (popupModal = true)}
                 >
