@@ -150,6 +150,11 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         startByte = parseInt(parts[0], 10) || 0;
     }
 
+    console.error(
+        `[transcode] range=${rangeHeader ?? 'none'} totalBytes=${totalBytes} ` +
+            `startByte=${startByte} srcBrKbps=${srcBrKbps} duration=${duration}`
+    );
+
     const startSeconds = startByte / bytesPerSecond;
 
     // Seeking: `-ss` does NOT work reliably with HTTP inputs, and pipe:0
