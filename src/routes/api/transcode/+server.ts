@@ -75,6 +75,12 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     // - otherwise -> 401
     let profile: TranscodeProfile;
     const user = locals.user;
+    // The web client knows the DB duration and passes it as ?duration=;
+    // more reliable than probing, and required for Range seeks when the
+    // probe fails (otherwise totalBytes=0 and Range is ignored).
+    const durationParam = parseFloat(url.searchParams.get('duration') ?? '');
+    const durationHint =
+        Number.isFinite(durationParam) && durationParam > 0 ? durationParam : null;
     // Duration probed alongside bitrate for logged-in users (parallel, see
     // below); anonymous device profiles probe it separately after.
     let probedDuration: number | null = null;
@@ -90,9 +96,12 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         const hopUrl = internalAudioUrl(url, audioUrl);
         // Probe bitrate + duration in parallel: each is timeout-bounded, so
         // time-to-first-byte is max(probe) instead of sum(probe).
+        // Skip the duration probe when the client provided a hint.
         const [bitRateBps, durationVal] = await Promise.all([
             probeFormatNumber(hopUrl, 'bit_rate'),
-            probeFormatNumber(hopUrl, 'duration')
+            durationHint !== null
+                ? Promise.resolve(durationHint)
+                : probeFormatNumber(hopUrl, 'duration')
         ]);
         probedDuration = durationVal;
         const srcBr = bitRateBps === null ? null : Math.round(bitRateBps / 1000);

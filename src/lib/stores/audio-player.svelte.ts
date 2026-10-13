@@ -230,7 +230,11 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
 
     // All web playback goes through /api/transcode: the server applies the
     // user's saved tier (or serves the source directly for the "original" tier).
-    const proxiedUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}`;
+    // Pass the DB duration so the server can honor Range seeks even when
+    // ffprobe can't determine the duration (totalBytes=0 ignores Range).
+    const durationParam =
+        episode.duration && episode.duration > 0 ? `&duration=${episode.duration}` : '';
+    const proxiedUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}`;
 
     audio.src = proxiedUrl;
     audio.playbackRate = player.playbackRate;
