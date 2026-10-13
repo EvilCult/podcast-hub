@@ -252,13 +252,13 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         }
     }
 
+    // -reconnect options are only valid for HTTP inputs; temp files
+    // (seek) must not include them ("Option reconnect not found").
+    const isHttpInput = ffmpegInput.startsWith('http');
     const ffmpegArgs = [
-        '-reconnect',
-        '1',
-        '-reconnect_streamed',
-        '1',
-        '-reconnect_delay_max',
-        '5',
+        ...(isHttpInput
+            ? ['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5']
+            : []),
         '-threads',
         '1',
         '-i',
