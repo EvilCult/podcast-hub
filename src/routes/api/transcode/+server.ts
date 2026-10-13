@@ -1,5 +1,8 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { spawn, execFile } from 'child_process';
+import { randomBytes } from 'crypto';
+import { createWriteStream } from 'fs';
+import { unlink } from 'fs/promises';
 import { promisify } from 'util';
 
 import {
@@ -84,6 +87,8 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     // Duration probed alongside bitrate for logged-in users (parallel, see
     // below); anonymous device profiles probe it separately after.
     let probedDuration: number | null = null;
+    // Source bitrate (kbps) for seek byte-offset estimation.
+    let srcBrKbps: number | null = null;
 
     if (user) {
         const row = getUserById(user.id);
@@ -105,6 +110,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         ]);
         probedDuration = durationVal;
         const srcBr = bitRateBps === null ? null : Math.round(bitRateBps / 1000);
+        srcBrKbps = srcBr;
         if (srcBr === null) {
             // Source quality unknown: cap at standard, never upscale blindly.
             profile = target.br <= TIER_PROFILES.standard.br ? target : TIER_PROFILES.standard;
@@ -146,11 +152,51 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
 
     const startSeconds = startByte / bytesPerSecond;
 
-    // Seeking: `-ss` before `-i` (input seeking) fails with HTTP inputs
-    // ("Input/output error"). Use `-ss` after `-i` (output seeking) instead:
-    // ffmpeg decodes and discards until the target time. Reliable with any
-    // input; fast enough (MP3 decodes at ~200x realtime).
-    const seekArgs: string[] = startByte > 0 ? ['-ss', startSeconds.toFixed(2)] : [];
+    // Seeking: `-ss` (before or after `-i`) does NOT work reliably with HTTP
+    // inputs. Instead, fetch the source from the byte offset (estimated from
+    // probed source bitrate) via the hop's Range support, save to a temp
+    // file, and have ffmpeg read the file (which handles mid-stream MP3
+    // resync correctly, unlike pipe:0).
+    let ffmpegInput = hopUrl;
+    let seekTmpFile: string | null = null;
+    if (startByte > 0 && srcBrKbps !== null && srcBrKbps > 0) {
+        const sourceOffset = Math.floor((startSeconds * srcBrKbps * 1000) / 8);
+        try {
+            const hopRes = await fetch(hopUrl, {
+                headers: { Range: `bytes=${sourceOffset}-` }
+            });
+            if (hopRes.ok || hopRes.status === 206) {
+                seekTmpFile = `/tmp/folo-seek-${randomBytes(8).toString('hex')}.mp3`;
+                const fileStream = createWriteStream(seekTmpFile);
+                const body = hopRes.body;
+                if (body) {
+                    const reader = body.getReader();
+                    try {
+                        for (;;) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            if (!fileStream.write(value)) {
+                                await new Promise<void>((resolve) =>
+                                    fileStream.once('drain', resolve)
+                                );
+                            }
+                        }
+                    } finally {
+                        reader.releaseLock();
+                    }
+                }
+                await new Promise<void>((resolve, reject) => {
+                    fileStream.end(() => resolve());
+                    fileStream.on('error', reject);
+                });
+                ffmpegInput = seekTmpFile;
+            }
+        } catch (e) {
+            console.error('Seek temp file failed, falling back to full stream:', e);
+            seekTmpFile = null;
+            ffmpegInput = hopUrl;
+        }
+    }
 
     const ffmpegArgs = [
         '-reconnect',
@@ -162,8 +208,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         '-threads',
         '1',
         '-i',
-        hopUrl,
-        ...seekArgs,
+        ffmpegInput,
         '-vn',
         '-acodec',
         'libmp3lame',
@@ -184,6 +229,14 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
 
     const ffmpegProcess = spawn('ffmpeg', ffmpegArgs);
 
+    // Clean up the seek temp file when ffmpeg exits.
+    const cleanupTmp = () => {
+        if (seekTmpFile) {
+            unlink(seekTmpFile).catch(() => {});
+            seekTmpFile = null;
+        }
+    };
+
     let isControllerClosed = false;
 
     ffmpegProcess.stderr.on('data', (data) => {
@@ -198,6 +251,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         if (code !== 0 && !isControllerClosed) {
             console.error(`ffmpeg exited with code ${code} for ${audioUrl.slice(0, 80)}`);
         }
+        cleanupTmp();
     });
 
     const stream = new ReadableStream({
@@ -238,6 +292,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         cancel() {
             isControllerClosed = true;
             ffmpegProcess.kill('SIGKILL');
+            cleanupTmp();
         }
     });
 
