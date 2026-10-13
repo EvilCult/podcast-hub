@@ -152,11 +152,12 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
 
     const startSeconds = startByte / bytesPerSecond;
 
-    // Seeking: `-ss` (before or after `-i`) does NOT work reliably with HTTP
-    // inputs. Instead, fetch the source from the byte offset (estimated from
-    // probed source bitrate) via the hop's Range support, save to a temp
-    // file, and have ffmpeg read the file (which handles mid-stream MP3
-    // resync correctly, unlike pipe:0).
+    // Seeking: `-ss` does NOT work reliably with HTTP inputs, and pipe:0
+    // fails on MP3 frame resync. Instead, fetch the source from the byte
+    // offset (estimated from probed source bitrate) via the hop's Range
+    // support into a temp file, and have ffmpeg read the file. Download
+    // runs in background; ffmpeg starts after initial buffer (512KB).
+    // Download (~20MB/s) far outpaces ffmpeg consumption (~100KB/s).
     let ffmpegInput = hopUrl;
     let seekTmpFile: string | null = null;
     if (startByte > 0 && srcBrKbps !== null && srcBrKbps > 0) {
@@ -165,11 +166,13 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
             const hopRes = await fetch(hopUrl, {
                 headers: { Range: `bytes=${sourceOffset}-` }
             });
-            if (hopRes.ok || hopRes.status === 206) {
+            if ((hopRes.ok || hopRes.status === 206) && hopRes.body) {
                 seekTmpFile = `/tmp/folo-seek-${randomBytes(8).toString('hex')}.mp3`;
                 const fileStream = createWriteStream(seekTmpFile);
                 const body = hopRes.body;
-                if (body) {
+
+                // Background download (don't await).
+                const downloadDone = (async () => {
                     const reader = body.getReader();
                     try {
                         for (;;) {
@@ -183,16 +186,44 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
                         }
                     } finally {
                         reader.releaseLock();
+                        fileStream.end();
+                    }
+                })();
+                // Swallow errors: ffmpeg will hit EOF and exit cleanly.
+                downloadDone.catch(() => {});
+
+                // Wait for initial buffer (512KB) or 10s timeout.
+                const { stat } = await import('fs/promises');
+                const waitStart = Date.now();
+                let buffered = false;
+                while (Date.now() - waitStart < 10000) {
+                    try {
+                        const s = await stat(seekTmpFile);
+                        if (s.size >= 512 * 1024) {
+                            buffered = true;
+                            break;
+                        }
+                    } catch {}
+                    // Check if download already finished.
+                    const finished = await Promise.race([
+                        downloadDone.then(() => true).catch(() => true),
+                        new Promise((r) => setTimeout(() => r(false), 200))
+                    ]);
+                    if (finished) {
+                        buffered = true;
+                        break;
                     }
                 }
-                await new Promise<void>((resolve, reject) => {
-                    fileStream.end(() => resolve());
-                    fileStream.on('error', reject);
-                });
-                ffmpegInput = seekTmpFile;
+                if (buffered) {
+                    ffmpegInput = seekTmpFile;
+                } else {
+                    // Buffer timeout: fall back to full stream.
+                    seekTmpFile = null;
+                    ffmpegInput = hopUrl;
+                }
             }
         } catch (e) {
-            console.error('Seek temp file failed, falling back to full stream:', e);
+            console.error('Seek setup failed, falling back to full stream:', e);
             seekTmpFile = null;
             ffmpegInput = hopUrl;
         }
