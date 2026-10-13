@@ -144,7 +144,13 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         startByte = parseInt(parts[0], 10) || 0;
     }
 
-    const startSeconds = (startByte / bytesPerSecond).toFixed(2);
+    const startSeconds = startByte / bytesPerSecond;
+
+    // Seeking: `-ss` before `-i` (input seeking) fails with HTTP inputs
+    // ("Input/output error"). Use `-ss` after `-i` (output seeking) instead:
+    // ffmpeg decodes and discards until the target time. Reliable with any
+    // input; fast enough (MP3 decodes at ~200x realtime).
+    const seekArgs: string[] = startByte > 0 ? ['-ss', startSeconds.toFixed(2)] : [];
 
     const ffmpegArgs = [
         '-reconnect',
@@ -155,10 +161,9 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         '5',
         '-threads',
         '1',
-        '-ss',
-        startSeconds,
         '-i',
         hopUrl,
+        ...seekArgs,
         '-vn',
         '-acodec',
         'libmp3lame',
