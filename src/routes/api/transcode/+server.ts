@@ -150,11 +150,6 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         startByte = parseInt(parts[0], 10) || 0;
     }
 
-    console.error(
-        `[transcode] range=${rangeHeader ?? 'none'} totalBytes=${totalBytes} ` +
-            `startByte=${startByte} srcBrKbps=${srcBrKbps} duration=${duration}`
-    );
-
     const startSeconds = startByte / bytesPerSecond;
 
     // Seeking: `-ss` does NOT work reliably with HTTP inputs, and pipe:0
@@ -332,32 +327,40 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         }
     });
 
-    if (rangeHeader && totalBytes > 0) {
-        const chunkSize = totalBytes - startByte;
-        return new Response(stream, {
-            status: 206,
-            statusText: 'Partial Content',
-            headers: {
-                'Content-Type': 'audio/mpeg',
-                'Accept-Ranges': 'bytes',
-                'Content-Range': `bytes ${startByte}-${totalBytes - 1}/${totalBytes}`,
-                'Content-Length': chunkSize.toString(),
-                'Cache-Control': 'no-cache'
-            }
-        });
-    }
-
-    const headers: Record<string, string> = {
+    // Content-Duration helps the browser know the timeline for seeking
+    // (transcoded MP3 has no Xing header for duration metadata).
+    const headers206: Record<string, string> = {
         'Content-Type': 'audio/mpeg',
         'Accept-Ranges': 'bytes',
         'Cache-Control': 'no-cache'
     };
-
-    if (totalBytes > 0) {
-        headers['Content-Length'] = totalBytes.toString();
-    } else {
-        headers['Transfer-Encoding'] = 'chunked';
+    const headers200: Record<string, string> = {
+        'Content-Type': 'audio/mpeg',
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'no-cache'
+    };
+    if (duration > 0) {
+        const d = duration.toFixed(2);
+        headers206['Content-Duration'] = d;
+        headers200['Content-Duration'] = d;
     }
 
-    return new Response(stream, { status: 200, headers });
+    if (rangeHeader && totalBytes > 0) {
+        const chunkSize = totalBytes - startByte;
+        headers206['Content-Range'] = `bytes ${startByte}-${totalBytes - 1}/${totalBytes}`;
+        headers206['Content-Length'] = chunkSize.toString();
+        return new Response(stream, {
+            status: 206,
+            statusText: 'Partial Content',
+            headers: headers206
+        });
+    }
+
+    if (totalBytes > 0) {
+        headers200['Content-Length'] = totalBytes.toString();
+    } else {
+        headers200['Transfer-Encoding'] = 'chunked';
+    }
+
+    return new Response(stream, { status: 200, headers: headers200 });
 }
