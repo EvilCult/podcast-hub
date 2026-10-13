@@ -38,6 +38,10 @@ export const player = $state<State>({
 
 let audio: HTMLAudioElement | null = null;
 let saveTimer: ReturnType<typeof setInterval> | null = null;
+// Offset (seconds) for explicit ?pos= seeks: the server returns a stream
+// starting from pos, so the audio element's currentTime is relative to pos.
+// Display and saved position = audio.currentTime + posOffset.
+let posOffset = 0;
 
 async function save() {
     if (!browser || !audio || !player.episode || !player.radio || audio.currentTime <= 0) {
@@ -51,7 +55,7 @@ async function save() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                pos: Math.floor(audio.currentTime)
+                pos: Math.floor(audio.currentTime + posOffset)
             })
         });
     } catch (error) {
@@ -111,7 +115,7 @@ export function attachAudio(element: HTMLAudioElement) {
     let lastPositionSync = 0;
 
     audio.addEventListener('timeupdate', () => {
-        player.currentTime = audio?.currentTime ?? 0;
+        player.currentTime = (audio?.currentTime ?? 0) + posOffset;
         // Throttled: the UA interpolates position between updates.
         const now = Date.now();
         if (now - lastPositionSync > 5000) {
@@ -228,29 +232,28 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
     player.currentTime = 0;
     player.duration = episode.duration ?? 0;
 
+    const saved = await loadProgress(episode.id);
+
     // All web playback goes through /api/transcode: the server applies the
     // user's saved tier (or serves the source directly for the "original" tier).
-    // Pass the DB duration so the server can honor Range seeks even when
-    // ffprobe can't determine the duration (totalBytes=0 ignores Range).
+    // Pass the DB duration so the server can compute output size.
+    // For resume, pass ?pos=: the server seeks at the /api/audio level
+    // (fetches source from byte offset into temp file) and returns the
+    // transcoded stream from that point. This bypasses browser Range.
     const durationParam =
         episode.duration && episode.duration > 0 ? `&duration=${episode.duration}` : '';
-    const proxiedUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}`;
+    const resumePos = saved > 0 && saved < (episode.duration ?? Infinity) - 5 ? saved : 0;
+    posOffset = resumePos;
+    const posParam = resumePos > 0 ? `&pos=${resumePos}` : '';
+    const proxiedUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}${posParam}`;
+
+    // Store base URL (without pos) for later seeks.
+    (audio as HTMLAudioElement & { _baseUrl?: string })._baseUrl =
+        `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}`;
 
     audio.src = proxiedUrl;
     audio.playbackRate = player.playbackRate;
     audio.load();
-
-    const saved = await loadProgress(episode.id);
-
-    audio.addEventListener(
-        'loadedmetadata',
-        () => {
-            if (saved > 0 && saved < (audio?.duration || Infinity) - 5) {
-                audio!.currentTime = saved;
-            }
-        },
-        { once: true }
-    );
 
     updateMetadata();
 
@@ -278,18 +281,48 @@ export function togglePlay() {
 }
 
 export function seek(seconds: number) {
-    if (audio) {
-        audio.currentTime = Math.max(
-            0,
-            Math.min(audio.duration || Infinity, audio.currentTime + seconds)
-        );
-    }
+    if (!audio || !player.episode) return;
+    // Absolute position in the full episode timeline.
+    const target = Math.max(
+        0,
+        Math.min(player.duration || Infinity, player.currentTime + seconds)
+    );
+    setPosition(target);
 }
 
 export function setPosition(value: number) {
-    if (audio) {
+    if (!audio || !player.episode) return;
+    const baseUrl = (audio as HTMLAudioElement & { _baseUrl?: string })._baseUrl;
+    if (!baseUrl) {
         audio.currentTime = value;
+        return;
     }
+    const target = Math.max(0, value);
+    // Try native seek first (works for "original" tier where the browser
+    // can Range the source directly). If the browser ignores it (transcoded
+    // tier without working Range), fall back to explicit ?pos= reload.
+    try {
+        audio.currentTime = target;
+    } catch {
+        // InvalidStateError etc: fall through to pos reload.
+    }
+    setTimeout(() => {
+        if (!audio) return;
+        // If native seek worked, currentTime should be close to target
+        // (accounting for posOffset if a previous pos reload happened).
+        const currentAbs = audio.currentTime + posOffset;
+        if (Math.abs(currentAbs - target) < 2) return;
+        // Native seek failed: explicit server-side seek via ?pos=.
+        const pos = Math.floor(target);
+        posOffset = pos;
+        player.currentTime = pos;
+        player.loading = true;
+        audio.src = pos > 0 ? `${baseUrl}&pos=${pos}` : baseUrl;
+        audio.load();
+        void audio.play().catch(() => {
+            player.loading = false;
+        });
+    }, 800);
 }
 
 export function setPlaybackRate(value: number) {

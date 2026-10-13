@@ -84,6 +84,12 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     const durationParam = parseFloat(url.searchParams.get('duration') ?? '');
     const durationHint =
         Number.isFinite(durationParam) && durationParam > 0 ? durationParam : null;
+    // Explicit seek position (seconds). When the client passes ?pos=, the
+    // server seeks at the /api/audio level (fetches source from byte offset
+    // into temp file) and returns the transcoded stream from that point.
+    // This bypasses browser Range handling entirely.
+    const posParam = parseFloat(url.searchParams.get('pos') ?? '');
+    const posHint = Number.isFinite(posParam) && posParam > 0 ? posParam : 0;
     // Duration probed alongside bitrate for logged-in users (parallel, see
     // below); anonymous device profiles probe it separately after.
     let probedDuration: number | null = null;
@@ -150,7 +156,8 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         startByte = parseInt(parts[0], 10) || 0;
     }
 
-    const startSeconds = startByte / bytesPerSecond;
+    // Explicit ?pos= takes precedence over Range header.
+    const startSeconds = posHint > 0 ? posHint : startByte / bytesPerSecond;
 
     // Seeking: `-ss` does NOT work reliably with HTTP inputs, and pipe:0
     // fails on MP3 frame resync. Instead, fetch the source from the byte
@@ -160,7 +167,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     // Download (~20MB/s) far outpaces ffmpeg consumption (~100KB/s).
     let ffmpegInput = hopUrl;
     let seekTmpFile: string | null = null;
-    if (startByte > 0 && srcBrKbps !== null && srcBrKbps > 0) {
+    if (startSeconds > 0 && srcBrKbps !== null && srcBrKbps > 0) {
         const sourceOffset = Math.floor((startSeconds * srcBrKbps * 1000) / 8);
         try {
             const hopRes = await fetch(hopUrl, {
@@ -329,6 +336,8 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
 
     // Content-Duration helps the browser know the timeline for seeking
     // (transcoded MP3 has no Xing header for duration metadata).
+    // For ?pos= seeks, the stream duration is the remaining time.
+    const streamDuration = posHint > 0 ? Math.max(0, duration - posHint) : duration;
     const headers206: Record<string, string> = {
         'Content-Type': 'audio/mpeg',
         'Accept-Ranges': 'bytes',
@@ -339,8 +348,8 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         'Accept-Ranges': 'bytes',
         'Cache-Control': 'no-cache'
     };
-    if (duration > 0) {
-        const d = duration.toFixed(2);
+    if (streamDuration > 0) {
+        const d = streamDuration.toFixed(2);
         headers206['Content-Duration'] = d;
         headers200['Content-Duration'] = d;
     }
@@ -357,7 +366,15 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     }
 
     if (totalBytes > 0) {
-        headers200['Content-Length'] = totalBytes.toString();
+        // For explicit ?pos= seeks, the stream starts from pos, so the
+        // content length is the remaining bytes.
+        const effectiveBytes =
+            posHint > 0 ? Math.floor((duration - posHint) * bytesPerSecond) : totalBytes;
+        if (effectiveBytes > 0) {
+            headers200['Content-Length'] = effectiveBytes.toString();
+        } else {
+            headers200['Transfer-Encoding'] = 'chunked';
+        }
     } else {
         headers200['Transfer-Encoding'] = 'chunked';
     }
