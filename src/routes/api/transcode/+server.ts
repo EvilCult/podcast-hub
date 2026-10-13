@@ -101,6 +101,22 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         const tier = row && isTierName(row.tr_preset) ? row.tr_preset : 'standard';
         if (tier === 'original') {
             // "原始" tier: no ffmpeg, serve the source stream directly.
+            // If ?pos= is given, translate it to a byte Range (using probed
+            // source bitrate) so resume/seek works without browser Range.
+            if (posHint > 0) {
+                const hopUrl = internalAudioUrl(url, audioUrl);
+                const bitRateBps = await probeFormatNumber(hopUrl, 'bit_rate');
+                if (bitRateBps !== null && bitRateBps > 0) {
+                    const byteOffset = Math.floor((posHint * bitRateBps) / 8);
+                    const rangedRequest = new Request(request.url, {
+                        headers: {
+                            ...Object.fromEntries(request.headers.entries()),
+                            Range: `bytes=${byteOffset}-`
+                        }
+                    });
+                    return proxyAudioResponse(audioUrl, rangedRequest, fetch);
+                }
+            }
             return proxyAudioResponse(audioUrl, request, fetch);
         }
         const target = TIER_PROFILES[tier];

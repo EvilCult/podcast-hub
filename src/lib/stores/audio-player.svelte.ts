@@ -298,20 +298,21 @@ export function setPosition(value: number) {
         return;
     }
     const target = Math.max(0, value);
+    // audio.currentTime is relative to the current stream (which starts at
+    // posOffset). Convert absolute target to relative for native seek.
+    const relativeTarget = Math.max(0, target - posOffset);
     // Try native seek first (works for "original" tier where the browser
     // can Range the source directly). If the browser ignores it (transcoded
     // tier without working Range), fall back to explicit ?pos= reload.
     try {
-        audio.currentTime = target;
+        audio.currentTime = relativeTarget;
     } catch {
         // InvalidStateError etc: fall through to pos reload.
     }
     setTimeout(() => {
         if (!audio) return;
-        // If native seek worked, currentTime should be close to target
-        // (accounting for posOffset if a previous pos reload happened).
-        const currentAbs = audio.currentTime + posOffset;
-        if (Math.abs(currentAbs - target) < 2) return;
+        // If native seek worked, currentTime should be close to relativeTarget.
+        if (Math.abs(audio.currentTime - relativeTarget) < 2) return;
         // Native seek failed: explicit server-side seek via ?pos=.
         const pos = Math.floor(target);
         posOffset = pos;
