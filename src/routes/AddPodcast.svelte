@@ -79,7 +79,7 @@
                 <Select
                     bind:value={source}
                     disabled={postLoading}
-                    class="w-24 shrink-0 [&_select]:h-[42px]"
+                    class="w-24 shrink-0 [&_select]:h-10.5"
                 >
                     <option value="apple">Apple</option>
                     <option value="rss">RSS</option>
@@ -87,7 +87,7 @@
                 <Input
                     id="input-addon-button"
                     type="text"
-                    class="[&_input]:h-[42px]"
+                    class="[&_input]:h-10.5"
                     placeholder={source === 'apple'
                         ? 'https://podcasts.apple.com/us/podcast/xxxxxxxx'
                         : 'https://example.com/feed.xml'}
