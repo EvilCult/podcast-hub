@@ -113,8 +113,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     // The web client knows the DB duration and passes it as ?duration=;
     // used to compute the remaining Content-Length.
     const durationParam = parseFloat(url.searchParams.get('duration') ?? '');
-    const durationHint =
-        Number.isFinite(durationParam) && durationParam > 0 ? durationParam : null;
+    const durationHint = Number.isFinite(durationParam) && durationParam > 0 ? durationParam : null;
 
     // Profile resolution:
     // - logged-in web user -> their saved tier (smart bitrate rule applies)
@@ -176,8 +175,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
 
     // Logged-in users already probed duration in parallel above; anonymous
     // device profiles (explicit sr/br/ch) probe it here.
-    const duration =
-        probedDuration ?? (await probeFormatNumber(hopUrl, 'duration')) ?? 0;
+    const duration = probedDuration ?? (await probeFormatNumber(hopUrl, 'duration')) ?? 0;
 
     // Seeking: `-ss` does NOT work reliably with HTTP inputs, and pipe:0
     // fails on MP3 frame resync. Instead, fetch the source from the byte
@@ -230,7 +228,9 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
                             buffered = true;
                             break;
                         }
-                    } catch {}
+                    } catch (e) {
+                        console.log(e);
+                    }
                     // Check if download already finished.
                     const finished = await Promise.race([
                         downloadDone.then(() => true).catch(() => true),
