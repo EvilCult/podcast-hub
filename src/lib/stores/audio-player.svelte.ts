@@ -38,10 +38,20 @@ export const player = $state<State>({
 
 let audio: HTMLAudioElement | null = null;
 let saveTimer: ReturnType<typeof setInterval> | null = null;
-// Offset (seconds) for explicit ?pos= seeks: the server returns a stream
-// starting from pos, so the audio element's currentTime is relative to pos.
-// Display and saved position = audio.currentTime + posOffset.
-let posOffset = 0;
+// The audio element is a dumb player of the current segment: the server
+// returns a stream starting at `segmentStart` (via ?pos=), so the element's
+// currentTime is relative to the segment. Absolute position in the episode:
+//   segmentStart + audio.currentTime
+// The browser never seeks. All seeks reload the stream with a new ?pos=.
+let segmentStart = 0;
+// Base transcode URL for the current episode (without ?pos=), rebuilt on
+// every playEpisode so seeks always target the right episode.
+let baseUrl = '';
+
+/** Absolute playback position in the episode timeline (seconds). */
+function absolutePosition(): number {
+    return segmentStart + (audio?.currentTime ?? 0);
+}
 
 async function save() {
     if (!browser || !audio || !player.episode || !player.radio || audio.currentTime <= 0) {
@@ -55,7 +65,7 @@ async function save() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                pos: Math.floor(audio.currentTime + posOffset)
+                pos: Math.floor(absolutePosition())
             })
         });
     } catch (error) {
@@ -95,6 +105,22 @@ function stopSaveTimer() {
     }
 }
 
+/**
+ * Load the current episode's stream starting at `pos` seconds.
+ * Single entry point for every (re)load: initial play, resume, seek.
+ */
+function loadAt(pos: number) {
+    if (!audio) return;
+    segmentStart = Math.max(0, Math.floor(pos));
+    player.currentTime = segmentStart;
+    player.loading = true;
+    audio.src = segmentStart > 0 ? `${baseUrl}&pos=${segmentStart}` : baseUrl;
+    audio.load();
+    void audio.play().catch(() => {
+        player.loading = false;
+    });
+}
+
 export function attachAudio(element: HTMLAudioElement) {
     audio = element;
 
@@ -115,7 +141,7 @@ export function attachAudio(element: HTMLAudioElement) {
     let lastPositionSync = 0;
 
     audio.addEventListener('timeupdate', () => {
-        player.currentTime = (audio?.currentTime ?? 0) + posOffset;
+        player.currentTime = absolutePosition();
         // Throttled: the UA interpolates position between updates.
         const now = Date.now();
         if (now - lastPositionSync > 5000) {
@@ -232,28 +258,19 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
     player.currentTime = 0;
     player.duration = episode.duration ?? 0;
 
-    const saved = await loadProgress(episode.id);
-
     // All web playback goes through /api/transcode: the server applies the
     // user's saved tier (or serves the source directly for the "original" tier).
-    // Pass the DB duration so the server can compute output size.
-    // For resume, pass ?pos=: the server seeks at the /api/audio level
-    // (fetches source from byte offset into temp file) and returns the
-    // transcoded stream from that point. This bypasses browser Range.
+    // Pass the DB duration so the server can compute remaining Content-Length.
     const durationParam =
         episode.duration && episode.duration > 0 ? `&duration=${episode.duration}` : '';
+    baseUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}`;
+
+    // Resume: load the stream starting at the saved position.
+    const saved = await loadProgress(episode.id);
     const resumePos = saved > 0 && saved < (episode.duration ?? Infinity) - 5 ? saved : 0;
-    posOffset = resumePos;
-    const posParam = resumePos > 0 ? `&pos=${resumePos}` : '';
-    const proxiedUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}${posParam}`;
 
-    // Store base URL (without pos) for later seeks.
-    (audio as HTMLAudioElement & { _baseUrl?: string })._baseUrl =
-        `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}`;
-
-    audio.src = proxiedUrl;
     audio.playbackRate = player.playbackRate;
-    audio.load();
+    loadAt(resumePos);
 
     updateMetadata();
 
@@ -282,48 +299,17 @@ export function togglePlay() {
 
 export function seek(seconds: number) {
     if (!audio || !player.episode) return;
-    // Absolute position in the full episode timeline.
     const target = Math.max(
         0,
-        Math.min(player.duration || Infinity, player.currentTime + seconds)
+        Math.min(player.duration || Infinity, absolutePosition() + seconds)
     );
     setPosition(target);
 }
 
 export function setPosition(value: number) {
     if (!audio || !player.episode) return;
-    const baseUrl = (audio as HTMLAudioElement & { _baseUrl?: string })._baseUrl;
-    if (!baseUrl) {
-        audio.currentTime = value;
-        return;
-    }
-    const target = Math.max(0, value);
-    // audio.currentTime is relative to the current stream (which starts at
-    // posOffset). Convert absolute target to relative for native seek.
-    const relativeTarget = Math.max(0, target - posOffset);
-    // Try native seek first (works for "original" tier where the browser
-    // can Range the source directly). If the browser ignores it (transcoded
-    // tier without working Range), fall back to explicit ?pos= reload.
-    try {
-        audio.currentTime = relativeTarget;
-    } catch {
-        // InvalidStateError etc: fall through to pos reload.
-    }
-    setTimeout(() => {
-        if (!audio) return;
-        // If native seek worked, currentTime should be close to relativeTarget.
-        if (Math.abs(audio.currentTime - relativeTarget) < 2) return;
-        // Native seek failed: explicit server-side seek via ?pos=.
-        const pos = Math.floor(target);
-        posOffset = pos;
-        player.currentTime = pos;
-        player.loading = true;
-        audio.src = pos > 0 ? `${baseUrl}&pos=${pos}` : baseUrl;
-        audio.load();
-        void audio.play().catch(() => {
-            player.loading = false;
-        });
-    }, 800);
+    // The browser never seeks: reload the stream with a new ?pos=.
+    loadAt(Math.max(0, value));
 }
 
 export function setPlaybackRate(value: number) {

@@ -65,6 +65,38 @@ const internalAudioUrl = (requestUrl: URL, audioUrl: string) => {
     return `${base}/api/audio?url=${encodeURIComponent(audioUrl)}&key=${INTERNAL_AUDIO_KEY}`;
 };
 
+/**
+ * Proxy the source, translating ?pos= (seconds) to a byte Range using the
+ * source bitrate. Used by the "original" tier and by the "source already
+ * good enough" shortcut (no ffmpeg). The browser never seeks; the server
+ * seeks at the /api/audio level.
+ */
+async function proxyWithPos(
+    audioUrl: string,
+    request: Request,
+    fetchFn: typeof fetch,
+    requestUrl: URL,
+    pos: number
+): Promise<Response> {
+    if (pos <= 0) {
+        return proxyAudioResponse(audioUrl, request, fetchFn);
+    }
+    const hopUrl = internalAudioUrl(requestUrl, audioUrl);
+    const bitRateBps = await probeFormatNumber(hopUrl, 'bit_rate');
+    if (bitRateBps === null || bitRateBps <= 0) {
+        // Can't estimate offset: fall back to full stream from 0.
+        return proxyAudioResponse(audioUrl, request, fetchFn);
+    }
+    const byteOffset = Math.floor((pos * bitRateBps) / 8);
+    const rangedRequest = new Request(request.url, {
+        headers: {
+            ...Object.fromEntries(request.headers.entries()),
+            Range: `bytes=${byteOffset}-`
+        }
+    });
+    return proxyAudioResponse(audioUrl, rangedRequest, fetchFn);
+}
+
 export async function GET({ url, request, fetch, locals }: RequestEvent) {
     const audioUrl = url.searchParams.get('url');
 
@@ -72,24 +104,24 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         throw error(400, 'Missing url parameter');
     }
 
+    // Seek position (seconds). The ONLY seek mechanism: the client passes
+    // ?pos=, the server seeks at the /api/audio level and returns a stream
+    // starting from pos. The browser never seeks (no Range, no 206).
+    const posParam = parseFloat(url.searchParams.get('pos') ?? '');
+    const pos = Number.isFinite(posParam) && posParam > 0 ? posParam : 0;
+
+    // The web client knows the DB duration and passes it as ?duration=;
+    // used to compute the remaining Content-Length.
+    const durationParam = parseFloat(url.searchParams.get('duration') ?? '');
+    const durationHint =
+        Number.isFinite(durationParam) && durationParam > 0 ? durationParam : null;
+
     // Profile resolution:
     // - logged-in web user -> their saved tier (smart bitrate rule applies)
     // - anonymous + explicit sr/br/ch -> device (flatapi) mode, unchanged behavior
     // - otherwise -> 401
     let profile: TranscodeProfile;
     const user = locals.user;
-    // The web client knows the DB duration and passes it as ?duration=;
-    // more reliable than probing, and required for Range seeks when the
-    // probe fails (otherwise totalBytes=0 and Range is ignored).
-    const durationParam = parseFloat(url.searchParams.get('duration') ?? '');
-    const durationHint =
-        Number.isFinite(durationParam) && durationParam > 0 ? durationParam : null;
-    // Explicit seek position (seconds). When the client passes ?pos=, the
-    // server seeks at the /api/audio level (fetches source from byte offset
-    // into temp file) and returns the transcoded stream from that point.
-    // This bypasses browser Range handling entirely.
-    const posParam = parseFloat(url.searchParams.get('pos') ?? '');
-    const posHint = Number.isFinite(posParam) && posParam > 0 ? posParam : 0;
     // Duration probed alongside bitrate for logged-in users (parallel, see
     // below); anonymous device profiles probe it separately after.
     let probedDuration: number | null = null;
@@ -101,23 +133,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         const tier = row && isTierName(row.tr_preset) ? row.tr_preset : 'standard';
         if (tier === 'original') {
             // "原始" tier: no ffmpeg, serve the source stream directly.
-            // If ?pos= is given, translate it to a byte Range (using probed
-            // source bitrate) so resume/seek works without browser Range.
-            if (posHint > 0) {
-                const hopUrl = internalAudioUrl(url, audioUrl);
-                const bitRateBps = await probeFormatNumber(hopUrl, 'bit_rate');
-                if (bitRateBps !== null && bitRateBps > 0) {
-                    const byteOffset = Math.floor((posHint * bitRateBps) / 8);
-                    const rangedRequest = new Request(request.url, {
-                        headers: {
-                            ...Object.fromEntries(request.headers.entries()),
-                            Range: `bytes=${byteOffset}-`
-                        }
-                    });
-                    return proxyAudioResponse(audioUrl, rangedRequest, fetch);
-                }
-            }
-            return proxyAudioResponse(audioUrl, request, fetch);
+            return proxyWithPos(audioUrl, request, fetch, url, pos);
         }
         const target = TIER_PROFILES[tier];
         const hopUrl = internalAudioUrl(url, audioUrl);
@@ -138,7 +154,7 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
             profile = target.br <= TIER_PROFILES.standard.br ? target : TIER_PROFILES.standard;
         } else if (srcBr <= target.br) {
             // Source already at/below the requested quality: skip useless upscaling.
-            return proxyAudioResponse(audioUrl, request, fetch);
+            return proxyWithPos(audioUrl, request, fetch, url, pos);
         } else {
             profile = target;
         }
@@ -162,18 +178,6 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     // device profiles (explicit sr/br/ch) probe it here.
     const duration =
         probedDuration ?? (await probeFormatNumber(hopUrl, 'duration')) ?? 0;
-    const totalBytes = duration > 0 ? Math.floor(duration * bytesPerSecond) : 0;
-
-    const rangeHeader = request.headers.get('range');
-    let startByte = 0;
-
-    if (rangeHeader && totalBytes > 0) {
-        const parts = rangeHeader.replace(/bytes=/, '').split('-');
-        startByte = parseInt(parts[0], 10) || 0;
-    }
-
-    // Explicit ?pos= takes precedence over Range header.
-    const startSeconds = posHint > 0 ? posHint : startByte / bytesPerSecond;
 
     // Seeking: `-ss` does NOT work reliably with HTTP inputs, and pipe:0
     // fails on MP3 frame resync. Instead, fetch the source from the byte
@@ -183,8 +187,8 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
     // Download (~20MB/s) far outpaces ffmpeg consumption (~100KB/s).
     let ffmpegInput = hopUrl;
     let seekTmpFile: string | null = null;
-    if (startSeconds > 0 && srcBrKbps !== null && srcBrKbps > 0) {
-        const sourceOffset = Math.floor((startSeconds * srcBrKbps * 1000) / 8);
+    if (pos > 0 && srcBrKbps !== null && srcBrKbps > 0) {
+        const sourceOffset = Math.floor((pos * srcBrKbps * 1000) / 8);
         try {
             const hopRes = await fetch(hopUrl, {
                 headers: { Range: `bytes=${sourceOffset}-` }
@@ -350,50 +354,23 @@ export async function GET({ url, request, fetch, locals }: RequestEvent) {
         }
     });
 
-    // Content-Duration helps the browser know the timeline for seeking
-    // (transcoded MP3 has no Xing header for duration metadata).
-    // For ?pos= seeks, the stream duration is the remaining time.
-    const streamDuration = posHint > 0 ? Math.max(0, duration - posHint) : duration;
-    const headers206: Record<string, string> = {
+    // Always 200: the browser never seeks, so no 206 / Content-Range.
+    // Content-Length is the remaining bytes when duration is known.
+    const headers: Record<string, string> = {
         'Content-Type': 'audio/mpeg',
-        'Accept-Ranges': 'bytes',
         'Cache-Control': 'no-cache'
     };
-    const headers200: Record<string, string> = {
-        'Content-Type': 'audio/mpeg',
-        'Accept-Ranges': 'bytes',
-        'Cache-Control': 'no-cache'
-    };
-    if (streamDuration > 0) {
-        const d = streamDuration.toFixed(2);
-        headers206['Content-Duration'] = d;
-        headers200['Content-Duration'] = d;
-    }
-
-    if (rangeHeader && totalBytes > 0) {
-        const chunkSize = totalBytes - startByte;
-        headers206['Content-Range'] = `bytes ${startByte}-${totalBytes - 1}/${totalBytes}`;
-        headers206['Content-Length'] = chunkSize.toString();
-        return new Response(stream, {
-            status: 206,
-            statusText: 'Partial Content',
-            headers: headers206
-        });
-    }
-
-    if (totalBytes > 0) {
-        // For explicit ?pos= seeks, the stream starts from pos, so the
-        // content length is the remaining bytes.
-        const effectiveBytes =
-            posHint > 0 ? Math.floor((duration - posHint) * bytesPerSecond) : totalBytes;
-        if (effectiveBytes > 0) {
-            headers200['Content-Length'] = effectiveBytes.toString();
+    if (duration > 0) {
+        const remaining = pos > 0 ? Math.max(0, duration - pos) : duration;
+        const remainingBytes = Math.floor(remaining * bytesPerSecond);
+        if (remainingBytes > 0) {
+            headers['Content-Length'] = remainingBytes.toString();
         } else {
-            headers200['Transfer-Encoding'] = 'chunked';
+            headers['Transfer-Encoding'] = 'chunked';
         }
     } else {
-        headers200['Transfer-Encoding'] = 'chunked';
+        headers['Transfer-Encoding'] = 'chunked';
     }
 
-    return new Response(stream, { status: 200, headers: headers200 });
+    return new Response(stream, { status: 200, headers });
 }
