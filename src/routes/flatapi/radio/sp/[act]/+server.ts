@@ -34,7 +34,9 @@ export function GET({ params, url }: RequestEvent) {
                 id: row.id,
                 title: row.title,
                 url: row.url
-                    ? `${PUBLIC_HOST}/flatapi/transcode?url=${encodeURIComponent(row.url)}`
+                    ? `${PUBLIC_HOST}/flatapi/transcode?url=${encodeURIComponent(row.url)}${
+                            row.pos && row.pos > 0 ? `&pos=${row.pos}` : ''
+                        }`
                     : null,
                 duration: row.duration,
                 pos: row.pos
