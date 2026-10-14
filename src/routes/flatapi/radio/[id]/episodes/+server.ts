@@ -1,8 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 
 import { getEpisodeListByRadioId } from '$lib/server/repos/episode';
-import { deviceProfileQuery } from '$lib/server/transcode';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { PUBLIC_HOST } from '$env/static/public';
 
 export function GET({ params, url }: RequestEvent) {
     const radio_id = Number(params.id);
@@ -24,7 +23,7 @@ export function GET({ params, url }: RequestEvent) {
                 id: row.id,
                 title: row.title,
                 url: row.url
-                    ? `${PUBLIC_API_URL}/transcode?url=${encodeURIComponent(row.url)}&${deviceProfileQuery()}`
+                    ? `${PUBLIC_HOST}/flatapi/transcode?url=${encodeURIComponent(row.url)}`
                     : null,
                 duration: row.duration,
                 pos: row.pos
