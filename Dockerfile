@@ -1,5 +1,7 @@
 FROM node:22-slim
 
+RUN node --version
+
 WORKDIR /app
 
 RUN apt-get update \
