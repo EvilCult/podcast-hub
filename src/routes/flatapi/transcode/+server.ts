@@ -85,7 +85,7 @@ export async function GET({ url, fetch }: RequestEvent) {
                     headers: { Range: `bytes=${sourceOffset}-` }
                 });
                 if ((hopRes.ok || hopRes.status === 206) && hopRes.body) {
-                    seekTmpFile = `/tmp/folo-seek-${randomBytes(8).toString('hex')}.mp3`;
+                    seekTmpFile = `/tmp/podcast-hub-seek-${randomBytes(8).toString('hex')}.mp3`;
                     const fileStream = createWriteStream(seekTmpFile);
                     const body = hopRes.body;
 

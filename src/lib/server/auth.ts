@@ -32,7 +32,7 @@ export function verifyPassword(password: string, stored: string): boolean {
 // JWT (HS256, hand-rolled to avoid new dependencies)
 // ---------------------------------------------------------------------------
 
-export const SESSION_COOKIE = 'folo_session';
+export const SESSION_COOKIE = 'podcast_hub_session';
 export const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
 function getJwtSecret(): string {
