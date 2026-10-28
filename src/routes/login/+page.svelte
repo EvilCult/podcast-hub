@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import { Button, Card, Input, Label } from 'flowbite-svelte';
 
     let username = $state('');
@@ -25,7 +26,7 @@
                 errorMsg = data.error ?? '登录失败';
                 return;
             }
-            await goto('/');
+            await goto(resolve('/'));
         } catch {
             errorMsg = '网络错误，请重试';
         } finally {

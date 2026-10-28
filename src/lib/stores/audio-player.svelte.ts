@@ -38,6 +38,20 @@ export const player = $state<State>({
 
 let audio: HTMLAudioElement | null = null;
 let saveTimer: ReturnType<typeof setInterval> | null = null;
+// The audio element is a dumb player of the current segment: the server
+// returns a stream starting at `segmentStart` (via ?pos=), so the element's
+// currentTime is relative to the segment. Absolute position in the episode:
+//   segmentStart + audio.currentTime
+// The browser never seeks. All seeks reload the stream with a new ?pos=.
+let segmentStart = 0;
+// Base transcode URL for the current episode (without ?pos=), rebuilt on
+// every playEpisode so seeks always target the right episode.
+let baseUrl = '';
+
+/** Absolute playback position in the episode timeline (seconds). */
+function absolutePosition(): number {
+    return segmentStart + (audio?.currentTime ?? 0);
+}
 
 async function save() {
     if (!browser || !audio || !player.episode || !player.radio || audio.currentTime <= 0) {
@@ -51,7 +65,7 @@ async function save() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                pos: Math.floor(audio.currentTime)
+                pos: Math.floor(absolutePosition())
             })
         });
     } catch (error) {
@@ -91,6 +105,22 @@ function stopSaveTimer() {
     }
 }
 
+/**
+ * Load the current episode's stream starting at `pos` seconds.
+ * Single entry point for every (re)load: initial play, resume, seek.
+ */
+function loadAt(pos: number) {
+    if (!audio) return;
+    segmentStart = Math.max(0, Math.floor(pos));
+    player.currentTime = segmentStart;
+    player.loading = true;
+    audio.src = segmentStart > 0 ? `${baseUrl}&pos=${segmentStart}` : baseUrl;
+    audio.load();
+    void audio.play().catch(() => {
+        player.loading = false;
+    });
+}
+
 export function attachAudio(element: HTMLAudioElement) {
     audio = element;
 
@@ -108,12 +138,31 @@ export function attachAudio(element: HTMLAudioElement) {
 
     audio.addEventListener('canplay', () => (player.loading = false));
 
+    let lastPositionSync = 0;
+
     audio.addEventListener('timeupdate', () => {
-        player.currentTime = audio?.currentTime ?? 0;
+        player.currentTime = absolutePosition();
+        // Throttled: the UA interpolates position between updates.
+        const now = Date.now();
+        if (now - lastPositionSync > 5000) {
+            lastPositionSync = now;
+            updatePositionState();
+        }
     });
 
     audio.addEventListener('loadedmetadata', () => {
-        player.duration = audio?.duration || player.episode?.duration || 0;
+        // Transcoded streams report duration as Infinity/NaN (no metadata);
+        // prefer the DB duration which is always reliable.
+        const audioDuration =
+            audio?.duration && Number.isFinite(audio.duration) ? audio.duration : 0;
+        player.duration = player.episode?.duration || audioDuration || 0;
+        lastPositionSync = 0;
+        updatePositionState();
+    });
+
+    audio.addEventListener('seeked', () => {
+        lastPositionSync = 0;
+        updatePositionState();
     });
 
     audio.addEventListener('error', () => {
@@ -176,6 +225,24 @@ function updateMetadata() {
     });
 }
 
+/** Push current position/duration to the lock screen / system media UI. */
+function updatePositionState() {
+    if (!browser || !('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) {
+        return;
+    }
+    const duration = player.duration;
+    if (!duration || !Number.isFinite(duration) || duration <= 0) return;
+    try {
+        navigator.mediaSession.setPositionState({
+            duration,
+            playbackRate: player.playbackRate || 1,
+            position: Math.min(Math.max(player.currentTime, 0), duration)
+        });
+    } catch {
+        /* invalid state (e.g. duration changed mid-call) */
+    }
+}
+
 export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
     if (!audio || !episode.url) {
         player.error = '该 Episode 没有可播放的音频地址';
@@ -193,23 +260,17 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
 
     // All web playback goes through /api/transcode: the server applies the
     // user's saved tier (or serves the source directly for the "original" tier).
-    const proxiedUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}`;
+    // Pass the DB duration so the server can compute remaining Content-Length.
+    const durationParam =
+        episode.duration && episode.duration > 0 ? `&duration=${episode.duration}` : '';
+    baseUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}`;
 
-    audio.src = proxiedUrl;
-    audio.playbackRate = player.playbackRate;
-    audio.load();
-
+    // Resume: load the stream starting at the saved position.
     const saved = await loadProgress(episode.id);
+    const resumePos = saved > 0 && saved < (episode.duration ?? Infinity) - 5 ? saved : 0;
 
-    audio.addEventListener(
-        'loadedmetadata',
-        () => {
-            if (saved > 0 && saved < (audio?.duration || Infinity) - 5) {
-                audio!.currentTime = saved;
-            }
-        },
-        { once: true }
-    );
+    audio.playbackRate = player.playbackRate;
+    loadAt(resumePos);
 
     updateMetadata();
 
@@ -237,18 +298,18 @@ export function togglePlay() {
 }
 
 export function seek(seconds: number) {
-    if (audio) {
-        audio.currentTime = Math.max(
-            0,
-            Math.min(audio.duration || Infinity, audio.currentTime + seconds)
-        );
-    }
+    if (!audio || !player.episode) return;
+    const target = Math.max(
+        0,
+        Math.min(player.duration || Infinity, absolutePosition() + seconds)
+    );
+    setPosition(target);
 }
 
 export function setPosition(value: number) {
-    if (audio) {
-        audio.currentTime = value;
-    }
+    if (!audio || !player.episode) return;
+    // The browser never seeks: reload the stream with a new ?pos=.
+    loadAt(Math.max(0, value));
 }
 
 export function setPlaybackRate(value: number) {

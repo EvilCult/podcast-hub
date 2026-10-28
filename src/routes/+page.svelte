@@ -19,11 +19,11 @@
                 img={`/api/image?url=${encodeURIComponent(radio.cover)}`}
                 href={resolve(`/radio/${radio.id}`)}
             >
-                <div class="m-2 mt-3">
+                <div class="m-2 mt-3 flex h-12 items-center justify-center overflow-hidden">
                     <h5
-                        class="mb-1 text-center text-base font-bold tracking-tight text-gray-900 dark:text-white"
+                        class="line-clamp-2 text-center text-base font-bold tracking-tight text-gray-900 dark:text-white"
                     >
-                        {radio.title.length > 15 ? `${radio.title.slice(0, 15)}...` : radio.title}
+                        {radio.title}
                     </h5>
                 </div>
             </Card>

@@ -1,8 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 
 import { getEpisodeListByRadioId } from '$lib/server/repos/episode';
-import { deviceProfileQuery } from '$lib/server/transcode';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { PUBLIC_HOST } from '$env/static/public';
 
 export function GET({ params, url }: RequestEvent) {
     const radio_id = Number(params.id);
@@ -12,7 +11,8 @@ export function GET({ params, url }: RequestEvent) {
         return json({ error: 'Invalid url params' }, { status: 400 });
     }
 
-    const rows = getEpisodeListByRadioId(radio_id, page, pageSize, false, true);
+    // Device traffic is unauthenticated by design; it always reads the admin's (uid 1) data.
+    const rows = getEpisodeListByRadioId(radio_id, page, pageSize, false, true, 1);
     if (!rows) {
         return json({ error: 'Radio not found' }, { status: 404 });
     }
@@ -23,7 +23,9 @@ export function GET({ params, url }: RequestEvent) {
                 id: row.id,
                 title: row.title,
                 url: row.url
-                    ? `${PUBLIC_API_URL}/transcode?url=${encodeURIComponent(row.url)}&${deviceProfileQuery()}`
+                    ? `${PUBLIC_HOST}/flatapi/transcode?url=${encodeURIComponent(row.url)}${
+                            row.pos && row.pos > 0 ? `&pos=${row.pos}` : ''
+                        }`
                     : null,
                 duration: row.duration,
                 pos: row.pos

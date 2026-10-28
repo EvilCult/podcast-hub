@@ -1,8 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-const ALLOWED_HOST = 'cdn.lizhi.fm';
-
 export const GET: RequestHandler = async ({ url, fetch }) => {
     const target = url.searchParams.get('url');
 

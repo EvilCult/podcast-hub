@@ -209,12 +209,14 @@
                 <Label class="space-y-2">
                     <span>档位</span>
                     <Select bind:value={preset} disabled={presetLoading}>
-                        {#each TIER_OPTIONS as opt}
+                        {#each TIER_OPTIONS as opt (opt.name)}
                             <option value={opt.name}>{opt.label}（{opt.desc}）</option>
                         {/each}
                     </Select>
                 </Label>
-                {#if presetMsg}<p class="text-sm text-gray-500 dark:text-gray-400">{presetMsg}</p>{/if}
+                {#if presetMsg}<p class="text-sm text-gray-500 dark:text-gray-400">
+                        {presetMsg}
+                    </p>{/if}
                 <Button type="submit" color="primary" disabled={presetLoading}>保存</Button>
             </form>
         </Card>
@@ -232,7 +234,9 @@
                     <span>用户名</span>
                     <Input type="text" bind:value={usernameInput} disabled={unLoading} />
                 </Label>
-                {#if unMsg}<p class="text-sm {unOk ? 'text-green-600' : 'text-red-500'}">{unMsg}</p>{/if}
+                {#if unMsg}<p class="text-sm {unOk ? 'text-green-600' : 'text-red-500'}">
+                        {unMsg}
+                    </p>{/if}
                 <Button type="submit" color="primary" disabled={unLoading}>保存</Button>
             </form>
         </Card>
@@ -258,7 +262,9 @@
                     <span>确认新密码</span>
                     <Input type="password" bind:value={confirmPassword} disabled={pwLoading} />
                 </Label>
-                {#if pwMsg}<p class="text-sm {pwOk ? 'text-green-600' : 'text-red-500'}">{pwMsg}</p>{/if}
+                {#if pwMsg}<p class="text-sm {pwOk ? 'text-green-600' : 'text-red-500'}">
+                        {pwMsg}
+                    </p>{/if}
                 <Button type="submit" color="primary" disabled={pwLoading}>修改密码</Button>
             </form>
         </Card>
@@ -268,16 +274,20 @@
                 <div class="flex flex-col space-y-6">
                     <h2 class="text-xl font-medium text-gray-900 dark:text-white">用户管理</h2>
                     <div class="flex flex-col space-y-2">
-                        {#each users as u}
+                        {#each users as u (u.id)}
                             <div
                                 class="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700"
                             >
-                                <span class="text-sm font-medium text-gray-900 dark:text-white">{u.username}</span>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white"
+                                    >{u.username}</span
+                                >
                                 {#if u.id === 1}
                                     <Button size="xs" color="light" disabled>管理员</Button>
                                 {:else}
-                                    <Button size="xs" color="red" onclick={() => deleteUser(u.id, u.username)}
-                                        >删除</Button
+                                    <Button
+                                        size="xs"
+                                        color="red"
+                                        onclick={() => deleteUser(u.id, u.username)}>删除</Button
                                     >
                                 {/if}
                             </div>
@@ -290,14 +300,20 @@
                             addUser();
                         }}
                     >
-                        <h3 class="text-base font-medium text-gray-900 dark:text-white">添加用户</h3>
+                        <h3 class="text-base font-medium text-gray-900 dark:text-white">
+                            添加用户
+                        </h3>
                         <Label class="space-y-2">
                             <span>用户名</span>
                             <Input type="text" bind:value={newUsername} disabled={userLoading} />
                         </Label>
                         <Label class="space-y-2">
                             <span>密码</span>
-                            <Input type="text" bind:value={newUserPassword} disabled={userLoading} />
+                            <Input
+                                type="text"
+                                bind:value={newUserPassword}
+                                disabled={userLoading}
+                            />
                         </Label>
                         {#if userMsg}<p class="text-sm text-red-500">{userMsg}</p>{/if}
                         <Button type="submit" color="primary" disabled={userLoading}>添加</Button>

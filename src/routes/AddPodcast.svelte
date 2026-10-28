@@ -64,6 +64,10 @@
 </script>
 
 <Modal form bind:open={popupModal} size="xs" transition={slide}>
+    <!-- Focus sink: Flowbite's Dialog auto-focuses the first input/select/button
+         on open ([data-autofocus] takes priority). Park focus here so nothing
+         visibly focusable is pre-selected. -->
+    <div tabindex="-1" data-autofocus class="outline-none" aria-hidden="true"></div>
     <div class="text-center">
         <h3 class="mb-5 text-base font-normal text-gray-500 dark:text-gray-400">添加新的PodCast</h3>
         <div class="space-x-2">
@@ -75,7 +79,7 @@
                 <Select
                     bind:value={source}
                     disabled={postLoading}
-                    class="w-24 shrink-0 [&_select]:h-[42px]"
+                    class="w-24 shrink-0 [&_select]:h-10.5"
                 >
                     <option value="apple">Apple</option>
                     <option value="rss">RSS</option>
@@ -83,7 +87,7 @@
                 <Input
                     id="input-addon-button"
                     type="text"
-                    class="[&_input]:h-[42px]"
+                    class="[&_input]:h-10.5"
                     placeholder={source === 'apple'
                         ? 'https://podcasts.apple.com/us/podcast/xxxxxxxx'
                         : 'https://example.com/feed.xml'}
