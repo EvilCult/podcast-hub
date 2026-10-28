@@ -179,3 +179,9 @@ npm run preview
 ├── Dockerfile               # Image build (Node 22 + FFmpeg)
 └── .env.example             # Example environment configuration
 ```
+
+---
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](./LICENSE) file.

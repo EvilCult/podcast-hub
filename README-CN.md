@@ -179,3 +179,9 @@ npm run preview
 ├── Dockerfile               # 镜像构建 (Node 22 + FFmpeg)
 └── .env.example             # 环境变量示例
 ```
+
+---
+
+## 许可证
+
+本项目基于 MIT 许可证开源，详见 [LICENSE](./LICENSE) 文件。
