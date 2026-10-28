@@ -1,209 +1,181 @@
-# RadioProxy 📻
+# Podcast Hub 📻
 
-**RadioProxy** 是一个基于 **Svelte 5**、**SvelteKit** 和 **SQLite** 构建的自托管极简 Podcast (播客) 代理服务器与播放客户端。
+[中文文档](./README-CN.md)
 
-它旨在为播客爱好者提供一个无缝的播客收听与管理平台，尤其适用于绕过上游源的跨域（CORS）、防盗链限制，以及为网络受限或老旧的设备/第三方客户端提供**实时音频转码**服务。
+Podcast Hub is a self-hosted, minimal podcast proxy server and web player, built with **Svelte 5**, **SvelteKit**, and **SQLite**.
 
----
-
-## ✨ 核心特性
-
-- **➕ 一键订阅与 Apple Podcasts 支持**
-  - 支持直接粘贴标准 Podcast RSS Feed 进行订阅。
-  - 特别集成了 **Apple Podcasts 智能转换**。你可以直接输入 Apple Podcast 链接（如 `https://podcasts.apple.com/...`），系统会自动请求 iTunes API 解析并转换为其真实的 RSS 订阅源。
-
-- **🔄 高性能实时音频转码 (`/api/transcode`)**
-  - 深度整合系统级 `ffmpeg` & `ffprobe` 工具。
-  - 通过 `ffprobe` 获取原始音频的时长，并以固定码率自动估算字节数，完美支持生成 `Content-Range`，保证原生浏览器或老旧播放器在转码流中依然能够**自由拖动进度条**。
-  - **流式实时转码**：边转码边播放，无缓冲等待。将各种非通用格式或超高码率音频，实时转换为轻量、高兼容性的 **MP3 格式**（libmp3lame，单声道，44.100Hz 采样率，96kbps 码率）。
-
-- **🖼️ 跨域音频与图片直通代理**
-  - **音频代理 (`/api/audio`)**：突破某些播客托管商的防盗链及非安全协议限制，支持完整的 `HTTP Range` 续传，保障高保真直通播放。
-  - **封面代理 (`/api/image`)**：无缝解决第三方封面图（如荔枝FM等）的跨域防盗链问题，并内置 1 天的客户端浏览器缓存（`Cache-Control`），降低上游带宽消耗。
-
-- **💾 自动保存历史进度与续播**
-  - 前端播放器核心基于 **Svelte 5 细粒度响应式系统 (Runes)** 控制，提供细腻的组件级播放交互。
-  - 播放器每 **10 秒**自动在后台同步当前音频进度（`pos`），无感持久化至 SQLite 数据库。
-  - 下次点击任意单集，秒级恢复到上一次的播放位置，实现**跨设备无缝续播**。
-
-- **📜 无限滚动加载 (Infinite Scroll)**
-  - 单集列表采用 `IntersectionObserver` 懒加载分页数据，首屏仅加载必要数据，即使订阅包含数千集的播客，也能保持界面的极速响应。
-
-- **🤖 客户端专属扁平通道 (FlatAPI)**
-  - 特别为老旧设备、智能手表（如 Pebble 等）、极简播放终端提供扁平化、无嵌套的精简 API（`/flatapi/radio`）。
-  - **内置强制转码重定向**：FlatAPI 返回的所有单集音频地址会自动封装为本地实时转码链接。在受限设备上收听播客时，不仅可以大幅节约流量，还能获得卓越的播放兼容性。
+It gives podcast listeners a seamless place to subscribe and listen — working around upstream CORS and hotlink restrictions, serving **real-time audio transcoding** for bandwidth-constrained networks and minimal devices, and remembering playback progress across devices.
 
 ---
 
-## 🛠️ 技术栈
+## ✨ Features
 
-- **前端**：Svelte 5 (Runes), Tailwind CSS, Flowbite-Svelte (UI 组件库), Flowbite-Svelte-Icons
-- **后端**：SvelteKit (采用 `@sveltejs/adapter-node` 进行服务端构建与代理)
-- **数据库**：SQLite (`better-sqlite3`），默认开启 WAL (Write-Ahead Logging) 模式与外键约束
-- **核心工具**：FFmpeg & FFprobe（音频解码、分析、实时流式转码）
-- **部署**：Docker (内嵌 Cron 定时任务、FFmpeg 环境)
+- **➕ One-click subscribe, with Apple Podcasts support**
+  - Paste any standard podcast RSS feed to subscribe.
+  - Apple Podcasts links (e.g. `https://podcasts.apple.com/...`) are resolved automatically via the iTunes API into their real RSS feeds.
 
----
+- **🔄 Real-time audio transcoding (`/api/transcode`)**
+  - Powered by system-level `ffmpeg` / `ffprobe`.
+  - Four quality tiers, switchable per user in Settings:
+    | Tier | Sample rate | Bitrate | Channels |
+    | --- | --- | --- | --- |
+    | Smooth | 32 kHz | 48 kbps | mono |
+    | Standard | 44.1 kHz | 96 kbps | stereo |
+    | High | 44.1 kHz | 128 kbps | stereo |
+    | Original | — | — | — (source stream, no transcoding) |
+  - **Seek & resume via `?pos=`**: the client never seeks on the stream itself. Every seek or resume reloads the stream with `?pos=<seconds>`, and the server starts the transcode from that position. This works reliably where browser Range requests against a transcoded stream do not.
 
-## 📂 项目结构
+- **🖼️ Audio & image proxy**
+  - **Audio proxy (`/api/audio`)**: bypasses hotlink protection and non-HTTPS sources, with full `HTTP Range` support for direct playback.
+  - **Image proxy (`/api/image`)**: fixes CORS/hotlink issues for cover art, with a 1-day browser cache (`Cache-Control`) to reduce upstream bandwidth.
 
-```txt
-/
-├── config/                  # 容器配置 (crontab, 启动脚本)
-├── data/                    # 本地 SQLite 数据库目录 (database.db)
-├── src/
-│   ├── lib/
-│   │   ├── components/      # 播放器及通用 UI 组件 (Flowbite)
-│   │   ├── server/
-│   │   │   ├── models/      # 播客与单集的数据模型 (TypeScript)
-│   │   │   ├── repos/       # 数据库操作接口层 (better-sqlite3)
-│   │   │   └── db.ts        # SQLite 初始连接
-│   │   └── stores/          # Svelte 5 全局播放器状态管理
-│   └── routes/              # SvelteKit 页面与 API 路由
-│       ├── api/             # 播客、历史、音频代理、实时转码 API
-│       ├── flatapi/         # 外部设备精简 FlatAPI
-│       ├── radio/           # 播客单集展示与删除页面
-│       └── history/         # 播放历史记录页面
-└── Dockerfile               # 镜像构建配置 (集成 FFmpeg/Node 20)
-```
+- **💾 Playback progress & resume**
+  - The player syncs the current position (`pos`) to SQLite every **10 seconds**.
+  - Reopen any episode to resume exactly where you left off, on any device.
 
----
+- **📜 Infinite scroll**
+  - Episode lists load page by page via `IntersectionObserver`, so feeds with thousands of episodes stay fast.
 
-## 🔌 API 接口文档
+- **👤 Accounts**
+  - Multi-user with login. The first run seeds a default admin account — **username `admin`, password `123456`**. Change the password in Settings after your first login.
 
-### 1. 播客管理 API
+- **🔁 Automatic feed refresh**
+  - The Docker image runs a cron job that re-fetches all subscribed feeds every **4 hours** (`/api/refresh`), so new episodes appear without manual action.
 
-- **获取订阅列表**
-  - **GET** `/api/radio`
-  - _返回_：返回当前所有已订阅播客的精简列表。
-
-- **添加播客订阅**
-  - **POST** `/api/radio`
-  - _请求体_：`{ "url": "https://..." }` (支持直接使用 RSS 或 Apple Podcast 详情链接)
-  - _流程_：如果是 Apple Podcast，将自动请求 iTunes API 解析转换为真实的 RSS URL，然后抓取解析并入库。
-
-- **删除播客订阅**
-  - **DELETE** `/api/radio/[id]`
-  - _说明_：会一并清除对应播客的所有单集数据。
-
-- **获取播客单集分页列表**
-  - **GET** `/api/radio/[id]/episodes?p=1&ps=10`
-  - _参数_：`p` 页码（默认 1），`ps` 页大小（默认 5）
+- **🤖 FlatAPI for minimal devices**
+  - A flat, no-nesting API (`/flatapi/...`) for constrained clients — old devices, smartwatches, minimal playback terminals.
+  - All episode URLs are automatically wrapped in the device transcode profile (**32 kHz / 48 kbps / mono**) to save bandwidth and maximize compatibility.
+  - No authentication by design: it always reads the admin's (uid 1) subscriptions, favorites, and history. Do not expose FlatAPI publicly unless you are fine with that.
 
 ---
 
-### 2. 播放历史与进度 API
+## 🛠️ Tech Stack
 
-- **更新单集播放进度**
-  - **POST** `/api/episode/[id]/history`
-  - _请求体_：`{ "pos": 120 }`（单位：秒，当前播放的实时位置）
-
-- **获取单集播放进度**
-  - **GET** `/api/episode/[id]/history`
-  - _返回_：`{ "pos": 120 }`
+- **Frontend**: Svelte 5 (Runes), Tailwind CSS, Flowbite-Svelte
+- **Backend**: SvelteKit with `@sveltejs/adapter-node`
+- **Database**: SQLite (`better-sqlite3`), WAL mode, foreign keys enforced
+- **Core tools**: FFmpeg & FFprobe (decoding, probing, streaming transcode)
+- **Deployment**: Docker (cron and FFmpeg included in the image)
 
 ---
 
-### 3. 音视频与图片代理/转码 API
+## 🚀 Quick Start (Docker)
 
-- **音频直通代理**
-  - **GET** `/api/audio?url=<encode_url>`
-  - _说明_：中转音频并解决跨域、防盗链、HTTP 等协议限制，完全支持 `Range` 请求。
-
-- **图片缓存代理**
-  - **GET** `/api/image?url=<encode_url>`
-  - _说明_：中转播客封面，并附带浏览器本地强缓存。
-
-- **实时 MP3 音频转码**
-  - **GET** `/api/transcode?url=<encode_url>`
-  - _原理_：拉取上游音频流，送入本地 `ffmpeg` 进程实时转码为 MP3（96kbps, 单声道）输出。支持断点拖动。
-  - _可选参数_：`sr`（采样率 8000–48000，默认 44100）、`br`（码率 kbps 16–320，默认 96）、`ch`（声道 1–2，默认 1）。FlatAPI 设备端使用 `sr=22050&br=48&ch=1`。
-
----
-
-### 4. 扁平化API FlatAPI (FOLO-AI-PASSPORT 客户端专用)
-
-- **获取播客平面列表**
-  - **GET** `/flatapi/radio`
-  - _返回_：`[ { "title": "...", "url": "http://<PUBLIC_HOST>/flatapi/radio/[id]/episodes" } ]`
-
-- **获取播客单集列表（强制转码模式）**
-  - **GET** `/flatapi/radio/[id]/episodes?p=1&ps=5`
-  - _说明_：返回结果中的音频 `url` 会自动替换为本地 `/api/transcode` 实时转码代理（设备 profile：22050Hz / 48kbps / 单声道），专为极简播放终端量身定制。
-
-- **中文标题点阵位图（设备端渲染）**
-  - **GET** `/flatapi/glyph?text=<urlencoded>&px=16`
-  - _返回_：`application/octet-stream`，body 为 `[width: u16be][height: u16be][PackBits 压缩的 1bpp 像素]`（MSB 为最左像素，1=墨色，每行补齐到整字节）。
-
----
-
-## 🚀 本地开发与运行
-
-### 1. 系统要求
-
-由于本项目集成了音频转码和时长分析功能，您的开发环境必须安装 **FFmpeg** 且将其加入到环境变量 `PATH` 中。
-
-- **macOS**：`brew install ffmpeg`
-- **Linux (Ubuntu/Debian)**：`sudo apt-get install ffmpeg`
-
-### 2. 创建环境配置文件
-
-在项目根目录下创建一个 `.env` 文件，用于指定本项目的公共可访问 API 基础路径：
-
-```env
-PUBLIC_API_URL=http://localhost:3000/api
-PUBLIC_HOST=http://localhost:3000
-```
-
-### 3. 安装与运行
+Prebuilt multi-arch images (`linux/amd64`, `linux/arm64`) are published to GitHub Container Registry on every update to `main`:
 
 ```sh
-# 1. 安装依赖
+docker run -d \
+  --name podcast-hub \
+  -p 3000:3000 \
+  -v ./data:/app/data \
+  -e PUBLIC_API_URL=http://your-server:3000/api \
+  -e PUBLIC_HOST=http://your-server:3000 \
+  --restart unless-stopped \
+  ghcr.io/evilcult/podcast-hub:latest
+```
+
+Then open `http://your-server:3000` and log in with `admin` / `123456`.
+
+> ⚠️ Mount the **whole `data/` directory**, never a single database file — SQLite WAL mode keeps `database.db`, `database.db-wal`, and `database.db-shm` together, and mounting a single file will split them apart.
+
+### Build the image yourself
+
+```sh
+docker build -t podcast-hub .
+```
+
+---
+
+## ⚙️ Configuration
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `PUBLIC_API_URL` | Yes | Public base URL of the API, e.g. `http://your-server:3000/api`. Baked into the frontend and into absolute URLs returned by the API. |
+| `PUBLIC_HOST` | Yes | Public base URL of the server, e.g. `http://your-server:3000`. Used to build FlatAPI/transcode URLs for device clients. |
+| `PROXY_URL` | No | Outbound proxy for all server-side fetches (iTunes lookup, RSS, cover art, audio). Empty = direct. `socks5://127.0.0.1:1080` for a direct proxy, or `https_proxy` to reuse the value of the `https_proxy` environment variable. `no_proxy` is honored. |
+| `JWT_SECRET` | No | Secret for signing session cookies. If unset, a random secret is generated and stored in `data/jwt_secret` (gitignored). Set it explicitly if you run multiple instances sharing one `data/` directory. |
+| `PORT` | No | Port the server listens on. Default `3000`. |
+
+For local development, copy `.env.example` to `.env` and adjust the values. Note that `.env` is only read under local `vite dev`; Docker deployments take configuration from the container environment instead.
+
+---
+
+## 💻 Local Development
+
+FFmpeg must be installed and on your `PATH`:
+
+- **macOS**: `brew install ffmpeg`
+- **Linux (Ubuntu/Debian)**: `sudo apt-get install ffmpeg`
+
+```sh
+# 1. Install dependencies
 npm install
 
-# 2. 启动开发服务器 (默认端口 5173，可以通过 vite.config 指定端口)
+# 2. Start the dev server (default port 5173)
 npm run dev
 
-# 3. 构建生产产物
+# 3. Build for production
 npm run build
 
-# 4. 本地预览构建产物
+# 4. Preview the production build
 npm run preview
 ```
 
 ---
 
-## 🐳 Docker 生产部署
+## 🔌 API Reference
 
-推荐使用 Docker 镜像进行自托管部署，这样您无需在本机上额外配置 node 或 ffmpeg 运行环境。
+### Podcasts
 
-### 1. 构建镜像
+- **GET** `/api/radio` — list subscriptions.
+- **POST** `/api/radio` — subscribe. Body: `{ "url": "https://..." }` (RSS feed or Apple Podcasts link).
+- **DELETE** `/api/radio/[id]` — unsubscribe; also deletes all episodes of that podcast.
+- **GET** `/api/radio/[id]/episodes?p=1&ps=10` — paginated episode list (`p` = page, default 1; `ps` = page size, default 5).
 
-在项目根目录下执行以下命令构建 Docker 镜像：
+### Playback progress & favorites
 
-```sh
-docker build -t radioproxy .
-```
+- **GET / POST** `/api/episode/[id]/history` — get / update playback position. Body: `{ "pos": 120 }` (seconds).
+- **GET** `/api/history` — playback history list.
+- **GET / PUT / DELETE** `/api/fav` — favorites (see route for the exact body shape).
 
-### 2. 运行容器
+### Proxy & transcode
 
-建议将本地的 `data` 目录挂载到容器中，以确保 SQLite 数据库不会因容器重启而丢失。
+- **GET** `/api/audio?url=<encoded_url>` — proxied audio with `Range` support.
+- **GET** `/api/image?url=<encoded_url>` — proxied cover art with browser caching.
+- **GET** `/api/transcode?url=<encoded_url>&pos=<seconds>&duration=<seconds>` — real-time MP3 transcode. Logged-in users get their saved tier; anonymous requests must pass explicit `sr` (8000–48000), `br` (16–320), `ch` (1–2) parameters (device mode), otherwise `401`.
+- **GET / POST** `/api/refresh` — re-fetch all subscribed feeds now.
 
-```sh
-docker run -d \
-  --name radioproxy \
-  -p 3000:3000 \
-  -v $(pwd)/data:/app/data \
-  -e PUBLIC_API_URL=http://你的服务器IP或域名:3000/api \
-  -e PUBLIC_HOST=http://你的服务器IP或域名:3000 \
-  --restart unless-stopped \
-  radioproxy
-```
+### FlatAPI (device clients, no auth)
 
-运行成功后，访问 `http://localhost:3000` 即可开始订阅并收听您的 Podcast！
+- **GET** `/flatapi/radio` — flat subscription list; each item links to its episode list.
+- **GET** `/flatapi/radio/[id]/episodes?p=1&ps=5` — episodes with audio URLs wrapped in the device transcode profile. Includes `&pos=<seconds>` when a saved position exists.
+- **GET** `/flatapi/radio/sp/fav?p=1&ps=5` and `/flatapi/radio/sp/history?p=1&ps=5` — the admin's favorites and history, same URL wrapping.
+- **GET** `/flatapi/transcode?url=<encoded_url>&pos=<seconds>` — device-profile transcode endpoint (32 kHz / 48 kbps / mono), independent of web login.
 
 ---
 
-## 📜 许可证
+## 📂 Project Structure
 
-本项目基于 MIT 许可证开源。请尽情享用！
+```txt
+/
+├── .github/workflows/       # CI: multi-arch Docker image build & publish
+├── config/                  # Container config (crontab, entrypoint)
+├── data/                    # SQLite database directory (gitignored)
+├── scripts/                 # Maintenance scripts
+├── src/
+│   ├── lib/
+│   │   ├── components/      # Player and shared UI components
+│   │   ├── server/          # Server-only code: DB, repos, transcode, refresh
+│   │   └── stores/          # Svelte 5 global player state
+│   └── routes/              # SvelteKit pages and API routes
+│       ├── api/             # Web + proxy/transcode API
+│       ├── flatapi/         # FlatAPI for device clients
+│       ├── radio/           # Podcast pages
+│       ├── fav/             # Favorites page
+│       ├── history/         # History page
+│       ├── settings/        # Settings page
+│       └── login/           # Login page
+├── static/                  # Static assets
+├── Dockerfile               # Image build (Node 22 + FFmpeg)
+└── .env.example             # Example environment configuration
+```
