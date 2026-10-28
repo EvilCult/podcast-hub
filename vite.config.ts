@@ -15,12 +15,4 @@ export default defineConfig({
             adapter: adapter()
         })
     ]
-    // server: {
-    //     proxy: {
-    //         '/api': {
-    //             target: 'http://10.0.1.11:3000',
-    //             changeOrigin: true
-    //         }
-    //     }
-    // }
 });
