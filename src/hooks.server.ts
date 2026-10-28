@@ -16,7 +16,8 @@ const PUBLIC_PREFIXES = [
     '/flatapi/', // device API: unauthenticated by design, independent of the web app
     '/api/auth/login', // the login endpoint itself
     '/api/transcode', // self-discriminates: device mode (explicit sr/br/ch) vs user mode (JWT)
-    '/api/audio' // key-gated internal hop for the transcode pipeline (403 without the per-boot key)
+    '/api/audio', // key-gated internal hop for the transcode pipeline (403 without the per-boot key)
+    '/api/refresh' // scan all radios, sync new episodes
 ];
 
 function isPublic(pathname: string): boolean {
