@@ -15,7 +15,7 @@
     import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
 
-    import { AppleSolid, ChevronDownOutline } from 'flowbite-svelte-icons';
+    import { MicrophoneSolid, ChevronDownOutline } from 'flowbite-svelte-icons';
 
     let { children, data } = $props();
 
@@ -28,9 +28,9 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 <Navbar class="dark:bg-gray-800">
     <NavBrand href="/">
-        <AppleSolid class="mr-2 h-7 w-7 shrink-0 text-gray-100" />
+        <MicrophoneSolid class="mr-2 h-7 w-7 shrink-0 text-gray-100" />
         <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white"
-            >PodCast Streaming Proxy</span
+            >PodCast Hub</span
         >
     </NavBrand>
     <NavHamburger />
