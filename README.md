@@ -1,5 +1,7 @@
 # Podcast Hub 📻
 
+[![podcast-hub](https://raw.githubusercontent.com/evilcult/podcast-hub/main/Docs/Preview.png)](https://github.com/evilcult/podcast-hub)
+
 [中文文档](./Docs/README-CN.md)
 
 Podcast Hub is a self-hosted, minimal podcast proxy server and web player, built with **Svelte 5**, **SvelteKit**, and **SQLite**.
@@ -88,13 +90,12 @@ docker build -t podcast-hub .
 
 ## ⚙️ Configuration
 
-| Variable         | Required | Description                                                                                                                                                                                                                                            |
-| ---------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PUBLIC_API_URL` | Yes      | Public base URL of the API, e.g. `http://your-server:3000/api`. Baked into the frontend and into absolute URLs returned by the API.                                                                                                                    |
-| `PUBLIC_HOST`    | Yes      | Public base URL of the server, e.g. `http://your-server:3000`. Used to build FlatAPI/transcode URLs for device clients.                                                                                                                                |
-| `PROXY_URL`      | No       | Outbound proxy for all server-side fetches (iTunes lookup, RSS, cover art, audio). Empty = direct. `socks5://127.0.0.1:1080` for a direct proxy, or `https_proxy` to reuse the value of the `https_proxy` environment variable. `no_proxy` is honored. |
-| `JWT_SECRET`     | No       | Secret for signing session cookies. If unset, a random secret is generated and stored in `data/jwt_secret` (gitignored). Set it explicitly if you run multiple instances sharing one `data/` directory.                                                |
-| `PORT`           | No       | Port the server listens on. Default `3000`.                                                                                                                                                                                                            |
+| Variable      | Required | Description                                                                                                                                 |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_HOST` | No       | Public base URL of the server, e.g. `http://your-server:3000`. Used to build API / transcode URLs. When the path is not the root path, include it, e.g. `http://your-server:3000/podcast`. |
+| `PROXY_URL`   | No       | Outbound proxy for all server-side fetches (iTunes lookup, RSS, cover art, audio). Empty = direct. `socks5://127.0.0.1:1080` for a direct proxy, or `https_proxy` to reuse the value of the `https_proxy` environment variable. `no_proxy` is honored. |
+| `JWT_SECRET`  | No       | Secret for signing session cookies. If unset, a random secret is generated and stored in `data/jwt_secret` (gitignored). Set it explicitly if you run multiple instances sharing one `data/` directory. |
+| `PORT`        | No       | Port the server listens on. Default `3000`.                                                                                                 |
 
 For local development, copy `.env.example` to `.env` and adjust the values. Note that `.env` is only read under local `vite dev`; Docker deployments take configuration from the container environment instead.
 
@@ -102,10 +103,10 @@ For local development, copy `.env.example` to `.env` and adjust the values. Note
 
 ## 💻 Local Development
 
-FFmpeg must be installed and on your `PATH`:
+Node and FFmpeg must be installed and on your `PATH`:
 
-- **macOS**: `brew install ffmpeg`
-- **Linux (Ubuntu/Debian)**: `sudo apt-get install ffmpeg`
+- **macOS**: `brew install node ffmpeg`
+- **Linux (Ubuntu/Debian)**: `sudo apt-get install nodejs npm ffmpeg`
 
 ```sh
 # 1. Install dependencies
@@ -125,32 +126,25 @@ npm run preview
 
 ## 🔌 API Reference
 
-### Podcasts
+See the [API Reference](./Docs/API_DOCS_EN.md) ([中文版](./Docs/API_DOCS_CN.md)).
 
-- **GET** `/api/radio` — list subscriptions.
-- **POST** `/api/radio` — subscribe. Body: `{ "url": "https://..." }` (RSS feed or Apple Podcasts link).
-- **DELETE** `/api/radio/[id]` — unsubscribe; also deletes all episodes of that podcast.
-- **GET** `/api/radio/[id]/episodes?p=1&ps=10` — paginated episode list (`p` = page, default 1; `ps` = page size, default 5).
+---
 
-### Playback progress & favorites
+## 🔌 TO-DO
 
-- **GET / POST** `/api/episode/[id]/history` — get / update playback position. Body: `{ "pos": 120 }` (seconds).
-- **GET** `/api/history` — playback history list.
-- **GET / PUT / DELETE** `/api/fav` — favorites (see route for the exact body shape).
-
-### Proxy & transcode
-
-- **GET** `/api/audio?url=<encoded_url>` — proxied audio with `Range` support.
-- **GET** `/api/image?url=<encoded_url>` — proxied cover art with browser caching.
-- **GET** `/api/transcode?url=<encoded_url>&pos=<seconds>&duration=<seconds>` — real-time MP3 transcode. Logged-in users get their saved tier; anonymous requests must pass explicit `sr` (8000–48000), `br` (16–320), `ch` (1–2) parameters (device mode), otherwise `401`.
-- **GET / POST** `/api/refresh` — re-fetch all subscribed feeds now.
-
-### FlatAPI (device clients, no auth)
-
-- **GET** `/flatapi/radio` — flat subscription list; each item links to its episode list.
-- **GET** `/flatapi/radio/[id]/episodes?p=1&ps=5` — episodes with audio URLs wrapped in the device transcode profile. Includes `&pos=<seconds>` when a saved position exists.
-- **GET** `/flatapi/radio/sp/fav?p=1&ps=5` and `/flatapi/radio/sp/history?p=1&ps=5` — the admin's favorites and history, same URL wrapping.
-- **GET** `/flatapi/transcode?url=<encoded_url>&pos=<seconds>` — device-profile transcode endpoint (32 kHz / 48 kbps / mono), independent of web login.
+- [x] Basic pages
+- [x] Favorites
+- [x] History & sync
+- [x] Infinite scroll
+- [x] One-click subscribe
+- [x] FlatAPI: simplified API for Folo AI Passport
+- [x] Real-time transcoding
+- [x] Auto refresh
+- [x] Multi-user system
+- [ ] Multi-language support
+- [ ] Multi-theme switching
+- [ ] YouTube to Podcast conversion
+- [ ] Performance optimization
 
 ---
 

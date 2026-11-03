@@ -1,5 +1,7 @@
 # 🔌 API 接口文档
 
+[English](./API_DOCS_EN.md) · [README](../README.md)
+
 ### 播客管理
 
 - **GET** `/api/radio` — 获取订阅列表。

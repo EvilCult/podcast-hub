@@ -1,8 +1,8 @@
 # Podcast Hub 📻
 
-[![podcast-hub](https://raw.githubusercontent.com/evilcult/podcast-hub/main/Docs/preview.png)](https://github.com/evilcult/podcast-hub)
+[![podcast-hub](https://raw.githubusercontent.com/evilcult/podcast-hub/main/Docs/Preview.png)](https://github.com/evilcult/podcast-hub)
 
-[English](./README.md)
+[English](../README.md)
 
 Podcast Hub 是一个自托管的极简播客代理服务器与网页播放器，基于 **Svelte 5**、**SvelteKit** 和 **SQLite** 构建。
 
@@ -124,6 +124,12 @@ npm run preview
 
 ---
 
+## 🔌 API 接口文档
+
+详见 [API 接口文档](./API_DOCS_CN.md)（[English](./API_DOCS_EN.md)）。
+
+---
+
 ## 🔌 TO-DO
 
 - [x] 基础页面
@@ -172,4 +178,4 @@ npm run preview
 
 ## 许可证
 
-本项目基于 MIT 许可证开源，详见 [LICENSE](./LICENSE) 文件。
+本项目基于 MIT 许可证开源，详见 [LICENSE](../LICENSE) 文件。
