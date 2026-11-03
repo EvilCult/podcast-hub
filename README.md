@@ -1,6 +1,6 @@
 # Podcast Hub 📻
 
-[中文文档](./README-CN.md)
+[中文文档](./Docs/README-CN.md)
 
 Podcast Hub is a self-hosted, minimal podcast proxy server and web player, built with **Svelte 5**, **SvelteKit**, and **SQLite**.
 
@@ -11,41 +11,41 @@ It gives podcast listeners a seamless place to subscribe and listen — working 
 ## ✨ Features
 
 - **➕ One-click subscribe, with Apple Podcasts support**
-  - Paste any standard podcast RSS feed to subscribe.
-  - Apple Podcasts links (e.g. `https://podcasts.apple.com/...`) are resolved automatically via the iTunes API into their real RSS feeds.
+    - Paste any standard podcast RSS feed to subscribe.
+    - Apple Podcasts links (e.g. `https://podcasts.apple.com/...`) are resolved automatically via the iTunes API into their real RSS feeds.
 
 - **🔄 Real-time audio transcoding (`/api/transcode`)**
-  - Powered by system-level `ffmpeg` / `ffprobe`.
-  - Four quality tiers, switchable per user in Settings:
-    | Tier | Sample rate | Bitrate | Channels |
-    | --- | --- | --- | --- |
-    | Smooth | 32 kHz | 48 kbps | mono |
-    | Standard | 44.1 kHz | 96 kbps | stereo |
-    | High | 44.1 kHz | 128 kbps | stereo |
-    | Original | — | — | — (source stream, no transcoding) |
-  - **Seek & resume via `?pos=`**: the client never seeks on the stream itself. Every seek or resume reloads the stream with `?pos=<seconds>`, and the server starts the transcode from that position. This works reliably where browser Range requests against a transcoded stream do not.
+    - Powered by system-level `ffmpeg` / `ffprobe`.
+    - Four quality tiers, switchable per user in Settings:
+        | Tier     | Sample rate | Bitrate  | Channels                          |
+        | -------- | ----------- | -------- | --------------------------------- |
+        | Smooth   | 32 kHz      | 48 kbps  | mono                              |
+        | Standard | 44.1 kHz    | 96 kbps  | stereo                            |
+        | High     | 44.1 kHz    | 128 kbps | stereo                            |
+        | Original | —           | —        | — (source stream, no transcoding) |
+    - **Seek & resume via `?pos=`**: the client never seeks on the stream itself. Every seek or resume reloads the stream with `?pos=<seconds>`, and the server starts the transcode from that position. This works reliably where browser Range requests against a transcoded stream do not.
 
 - **🖼️ Audio & image proxy**
-  - **Audio proxy (`/api/audio`)**: bypasses hotlink protection and non-HTTPS sources, with full `HTTP Range` support for direct playback.
-  - **Image proxy (`/api/image`)**: fixes CORS/hotlink issues for cover art, with a 1-day browser cache (`Cache-Control`) to reduce upstream bandwidth.
+    - **Audio proxy (`/api/audio`)**: bypasses hotlink protection and non-HTTPS sources, with full `HTTP Range` support for direct playback.
+    - **Image proxy (`/api/image`)**: fixes CORS/hotlink issues for cover art, with a 1-day browser cache (`Cache-Control`) to reduce upstream bandwidth.
 
 - **💾 Playback progress & resume**
-  - The player syncs the current position (`pos`) to SQLite every **10 seconds**.
-  - Reopen any episode to resume exactly where you left off, on any device.
+    - The player syncs the current position (`pos`) to SQLite every **10 seconds**.
+    - Reopen any episode to resume exactly where you left off, on any device.
 
 - **📜 Infinite scroll**
-  - Episode lists load page by page via `IntersectionObserver`, so feeds with thousands of episodes stay fast.
+    - Episode lists load page by page via `IntersectionObserver`, so feeds with thousands of episodes stay fast.
 
 - **👤 Accounts**
-  - Multi-user with login. The first run seeds a default admin account — **username `admin`, password `123456`**. Change the password in Settings after your first login.
+    - Multi-user with login. The first run seeds a default admin account — **username `admin`, password `123456`**. Change the password in Settings after your first login.
 
 - **🔁 Automatic feed refresh**
-  - The Docker image runs a cron job that re-fetches all subscribed feeds every **4 hours** (`/api/refresh`), so new episodes appear without manual action.
+    - The Docker image runs a cron job that re-fetches all subscribed feeds every **4 hours** (`/api/refresh`), so new episodes appear without manual action.
 
 - **🤖 FlatAPI for minimal devices**
-  - A flat, no-nesting API (`/flatapi/...`) for constrained clients — old devices, smartwatches, minimal playback terminals.
-  - All episode URLs are automatically wrapped in the device transcode profile (**32 kHz / 48 kbps / mono**) to save bandwidth and maximize compatibility.
-  - No authentication by design: it always reads the admin's (uid 1) subscriptions, favorites, and history. Do not expose FlatAPI publicly unless you are fine with that.
+    - A flat, no-nesting API (`/flatapi/...`) for constrained clients — old devices, smartwatches, minimal playback terminals.
+    - All episode URLs are automatically wrapped in the device transcode profile (**32 kHz / 48 kbps / mono**) to save bandwidth and maximize compatibility.
+    - No authentication by design: it always reads the admin's (uid 1) subscriptions, favorites, and history. Do not expose FlatAPI publicly unless you are fine with that.
 
 ---
 
@@ -88,13 +88,13 @@ docker build -t podcast-hub .
 
 ## ⚙️ Configuration
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `PUBLIC_API_URL` | Yes | Public base URL of the API, e.g. `http://your-server:3000/api`. Baked into the frontend and into absolute URLs returned by the API. |
-| `PUBLIC_HOST` | Yes | Public base URL of the server, e.g. `http://your-server:3000`. Used to build FlatAPI/transcode URLs for device clients. |
-| `PROXY_URL` | No | Outbound proxy for all server-side fetches (iTunes lookup, RSS, cover art, audio). Empty = direct. `socks5://127.0.0.1:1080` for a direct proxy, or `https_proxy` to reuse the value of the `https_proxy` environment variable. `no_proxy` is honored. |
-| `JWT_SECRET` | No | Secret for signing session cookies. If unset, a random secret is generated and stored in `data/jwt_secret` (gitignored). Set it explicitly if you run multiple instances sharing one `data/` directory. |
-| `PORT` | No | Port the server listens on. Default `3000`. |
+| Variable         | Required | Description                                                                                                                                                                                                                                            |
+| ---------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PUBLIC_API_URL` | Yes      | Public base URL of the API, e.g. `http://your-server:3000/api`. Baked into the frontend and into absolute URLs returned by the API.                                                                                                                    |
+| `PUBLIC_HOST`    | Yes      | Public base URL of the server, e.g. `http://your-server:3000`. Used to build FlatAPI/transcode URLs for device clients.                                                                                                                                |
+| `PROXY_URL`      | No       | Outbound proxy for all server-side fetches (iTunes lookup, RSS, cover art, audio). Empty = direct. `socks5://127.0.0.1:1080` for a direct proxy, or `https_proxy` to reuse the value of the `https_proxy` environment variable. `no_proxy` is honored. |
+| `JWT_SECRET`     | No       | Secret for signing session cookies. If unset, a random secret is generated and stored in `data/jwt_secret` (gitignored). Set it explicitly if you run multiple instances sharing one `data/` directory.                                                |
+| `PORT`           | No       | Port the server listens on. Default `3000`.                                                                                                                                                                                                            |
 
 For local development, copy `.env.example` to `.env` and adjust the values. Note that `.env` is only read under local `vite dev`; Docker deployments take configuration from the container environment instead.
 

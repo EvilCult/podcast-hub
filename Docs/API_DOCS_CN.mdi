@@ -1,0 +1,30 @@
+# 🔌 API 接口文档
+
+### 播客管理
+
+- **GET** `/api/radio` — 获取订阅列表。
+- **POST** `/api/radio` — 添加订阅。请求体：`{ "url": "https://..." }`（RSS 或 Apple Podcasts 链接）。
+- **DELETE** `/api/radio/[id]` — 取消订阅，同时删除该播客的全部单集数据。
+- **GET** `/api/radio/[id]/episodes?p=1&ps=10` — 单集分页列表（`p` 页码，默认 1；`ps` 页大小，默认 5）。
+
+### 播放进度与收藏
+
+- **GET / POST** `/api/episode/[id]/history` — 获取 / 更新单集播放进度。请求体：`{ "pos": 120 }`（单位：秒）。
+- **GET** `/api/history` — 播放历史列表。
+- **GET / PUT / DELETE** `/api/fav` — 收藏（具体请求体见路由实现）。
+
+### 代理与转码
+
+- **GET** `/api/audio?url=<encoded_url>` — 音频直通代理，支持 `Range` 请求。
+- **GET** `/api/image?url=<encoded_url>` — 封面图代理，带浏览器缓存。
+- **GET** `/api/transcode?url=<encoded_url>&pos=<秒数>&duration=<秒数>` — 实时 MP3 转码。已登录用户使用自己保存的档位；匿名请求必须带显式 `sr`（8000–48000）、`br`（16–320）、`ch`（1–2）参数（设备模式），否则返回 `401`。
+- **GET / POST** `/api/refresh` — 立即重新抓取全部订阅。
+
+### 扁平化 API FlatAPI（设备端，无鉴权）
+
+- **GET** `/flatapi/radio` — 扁平订阅列表，每项链接到其单集列表。
+- **GET** `/flatapi/radio/[id]/episodes?p=1&ps=5` — 单集列表，音频地址已封装为设备转码配置；有保存进度时自动带 `&pos=<秒数>`。
+- **GET** `/flatapi/radio/sp/fav?p=1&ps=5` 与 `/flatapi/radio/sp/history?p=1&ps=5` — 管理员的收藏与历史，地址封装方式相同。
+- **GET** `/flatapi/transcode?url=<encoded_url>&pos=<秒数>` — 设备端专用转码接口（32 kHz / 48 kbps / 单声道），不依赖网页登录。
+
+---
