@@ -70,7 +70,6 @@ docker run -d \
   --name podcast-hub \
   -p 3000:3000 \
   -v ./data:/app/data \
-  -e PUBLIC_API_URL=http://your-server:3000/api \
   -e PUBLIC_HOST=http://your-server:3000 \
   --restart unless-stopped \
   ghcr.io/evilcult/podcast-hub:latest

@@ -70,7 +70,6 @@ docker run -d \
   --name podcast-hub \
   -p 3000:3000 \
   -v ./data:/app/data \
-  -e PUBLIC_API_URL=http://你的服务器:3000/api \
   -e PUBLIC_HOST=http://你的服务器:3000 \
   --restart unless-stopped \
   ghcr.io/evilcult/podcast-hub:latest
@@ -92,7 +91,7 @@ docker build -t podcast-hub .
 
 | 变量          | 是否必填 | 说明                                                                                                                                                                                |
 | ------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PUBLIC_HOST` | 否       | 服务器的公共访问地址，如 `http://你的服务器:3000`。用于拼 API / 转码地址等。当path不是根路径时使用,如`http://你的服务器:3000/podcarst`                                              |
+| `PUBLIC_HOST` | 否       | 服务器的公共访问地址，如 `http://你的服务器:3000`。用于拼 API / 转码地址等。当path不是根路径时使用,如`http://你的服务器:3000/podcast`                                              |
 | `PROXY_URL`   | 否       | 服务端 fetch（iTunes 查询、RSS、封面图、音频）的出站代理。空 = 直连；`socks5://127.0.0.1:1080` 直接指定代理；`https_proxy` 则读取 `https_proxy` 环境变量的值。`no_proxy` 依然有效。 |
 | `JWT_SECRET`  | 否       | 会话 cookie 签名密钥。未设置时自动生成随机密钥并存入 `data/jwt_secret`（gitignored）。多实例共享同一 `data/` 目录时请显式设置。                                                     |
 | `PORT`        | 否       | 监听端口，默认 `3000`。                                                                                                                                                             |
