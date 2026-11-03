@@ -6,6 +6,7 @@
     import { Button, Modal, Toast, ToastContainer, Spinner } from 'flowbite-svelte';
     import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
     import { slide, fly } from 'svelte/transition';
+    import { PUBLIC_HOST } from '$env/static/public';
 
     let postLoading = $state(false);
 
@@ -13,7 +14,7 @@
         postLoading = true;
 
         try {
-            const res = await fetch(`/api/radio/${radio_id}`, {
+            const res = await fetch(`${PUBLIC_HOST}/api/radio/${radio_id}`, {
                 method: 'DELETE'
             });
 

@@ -2,6 +2,7 @@
     import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
     import { Button, Card, Input, Label } from 'flowbite-svelte';
+    import { PUBLIC_HOST } from '$env/static/public';
 
     let username = $state('');
     let password = $state('');
@@ -16,7 +17,7 @@
         loading = true;
         errorMsg = '';
         try {
-            const res = await fetch('/api/auth/login', {
+            const res = await fetch(`${PUBLIC_HOST}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: username.trim(), password })

@@ -12,6 +12,7 @@
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
     import EpisodeRow, { type RowEpisode } from '$lib/components/EpisodeRow.svelte';
     import DelPodcast from './DelPodcast.svelte';
+    import { PUBLIC_HOST } from '$env/static/public';
 
     let { data } = $props();
     const radio = $derived(data.radio as PlayerRadio);
@@ -46,7 +47,7 @@
         if (loading) return;
         loading = true;
         const res = await fetch(
-            `/api/radio/${radio.id}/episodes?p=1&order=${sortAsc ? 'asc' : 'desc'}&hide_played=${hidePlayed ? '1' : '0'}`
+            `${PUBLIC_HOST}/api/radio/${radio.id}/episodes?p=1&order=${sortAsc ? 'asc' : 'desc'}&hide_played=${hidePlayed ? '1' : '0'}`
         );
         loading = false;
         if (!res.ok) return;
@@ -69,7 +70,7 @@
     }
 
     async function toggleFav(ep: RowEpisode) {
-        const res = await fetch('/api/fav', {
+        const res = await fetch(`${PUBLIC_HOST}/api/fav`, {
             method: ep.is_fav ? 'DELETE' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ episode: ep.id })
@@ -81,7 +82,7 @@
 
     async function markListened(ep: RowEpisode) {
         if (!ep.duration || ep.duration <= 0) return;
-        const res = await fetch(`/api/episode/${ep.id}/history`, {
+        const res = await fetch(`${PUBLIC_HOST}/api/episode/${ep.id}/history`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pos: ep.duration })
@@ -91,7 +92,7 @@
     }
 
     async function deleteEpisode(ep: RowEpisode) {
-        const res = await fetch(`/api/episode/${ep.id}`, { method: 'DELETE' });
+        const res = await fetch(`${PUBLIC_HOST}/api/episode/${ep.id}`, { method: 'DELETE' });
         if (!res.ok) return;
         episodes = episodes.filter((e) => e.id !== ep.id);
     }
@@ -103,7 +104,7 @@
 
         const nextPage = page + 1;
         const res = await fetch(
-            `/api/radio/${radio.id}/episodes?p=${nextPage}&order=${sortAsc ? 'asc' : 'desc'}&hide_played=${hidePlayed ? '1' : '0'}`
+            `${PUBLIC_HOST}/api/radio/${radio.id}/episodes?p=${nextPage}&order=${sortAsc ? 'asc' : 'desc'}&hide_played=${hidePlayed ? '1' : '0'}`
         );
 
         if (!res.ok) {
@@ -150,7 +151,7 @@
 <div class="p-6">
     <div class="ml-10 flex space-x-4">
         <Avatar
-            src={'/api/image?url=' + encodeURIComponent(radio.cover ?? '')}
+            src={`${PUBLIC_HOST}/api/image?url=` + encodeURIComponent(radio.cover ?? '')}
             cornerStyle="rounded"
             class="size-30 sm:size-30 md:size-48"
         />

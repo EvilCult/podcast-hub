@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { PUBLIC_HOST } from '$env/static/public';
     import './layout.css';
     import favicon from '$lib/assets/favicon.svg';
     import {
@@ -20,7 +21,7 @@
     let { children, data } = $props();
 
     async function logout() {
-        await fetch('/api/auth/logout', { method: 'POST' });
+        await fetch(`${PUBLIC_HOST}/api/auth/logout`, { method: 'POST' });
         await goto(resolve('/login'));
     }
 </script>

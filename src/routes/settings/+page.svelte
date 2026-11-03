@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { PUBLIC_HOST } from '$env/static/public';
     import { invalidateAll } from '$app/navigation';
     import { Button, Card, Input, Label, Select } from 'flowbite-svelte';
 
@@ -31,7 +32,7 @@
         }
         unLoading = true;
         try {
-            const res = await fetch('/api/auth/username', {
+            const res = await fetch(`${PUBLIC_HOST}/api/auth/username`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ newUsername: usernameInput.trim() })
@@ -72,7 +73,7 @@
         }
         pwLoading = true;
         try {
-            const res = await fetch('/api/auth/password', {
+            const res = await fetch(`${PUBLIC_HOST}/api/auth/password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ oldPassword, newPassword })
@@ -116,7 +117,7 @@
         }
         presetLoading = true;
         try {
-            const res = await fetch('/api/user/preset', {
+            const res = await fetch(`${PUBLIC_HOST}/api/user/preset`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ preset })
@@ -144,7 +145,7 @@
         }
         userLoading = true;
         try {
-            const res = await fetch('/api/users', {
+            const res = await fetch(`${PUBLIC_HOST}/api/users`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: newUsername.trim(), password: newUserPassword })
@@ -168,7 +169,7 @@
         if (!confirm(`确定删除用户 ${username} 吗？他的历史和收藏会一并删除。`)) return;
         userMsg = '';
         try {
-            const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${PUBLIC_HOST}/api/users/${id}`, { method: 'DELETE' });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) {
                 userMsg = body.error ?? '删除失败';

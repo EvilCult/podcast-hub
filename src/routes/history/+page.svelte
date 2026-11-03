@@ -3,6 +3,7 @@
     import { playEpisode } from '$lib/stores/audio-player.svelte';
     import type { PlayerEpisode, PlayerRadio } from '$lib/stores/audio-player.svelte';
     import EpisodeRow, { type RowEpisode } from '$lib/components/EpisodeRow.svelte';
+    import { PUBLIC_HOST } from '$env/static/public';
 
     let { data } = $props();
 
@@ -21,7 +22,7 @@
     }
 
     async function toggleFav(ep: RowEpisode) {
-        const res = await fetch('/api/fav', {
+        const res = await fetch(`${PUBLIC_HOST}/api/fav`, {
             method: ep.is_fav ? 'DELETE' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ episode: ep.id })
@@ -33,7 +34,7 @@
 
     async function markListened(ep: RowEpisode) {
         if (!ep.duration || ep.duration <= 0) return;
-        const res = await fetch(`/api/episode/${ep.id}/history`, {
+        const res = await fetch(`${PUBLIC_HOST}/api/episode/${ep.id}/history`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pos: ep.duration })
@@ -43,7 +44,7 @@
     }
 
     async function deleteEpisode(ep: RowEpisode) {
-        const res = await fetch(`/api/episode/${ep.id}`, { method: 'DELETE' });
+        const res = await fetch(`${PUBLIC_HOST}/api/episode/${ep.id}`, { method: 'DELETE' });
         if (!res.ok) return;
         episodes = episodes.filter((e) => e.id !== ep.id);
     }
@@ -54,7 +55,7 @@
         loading = true;
 
         const nextPage = page + 1;
-        const res = await fetch(`/api/history?p=${nextPage}`);
+        const res = await fetch(`${PUBLIC_HOST}/api/history?p=${nextPage}`);
 
         if (!res.ok) {
             loading = false;

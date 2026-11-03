@@ -5,6 +5,7 @@
     import { invalidateAll } from '$app/navigation';
     import { Card, Button } from 'flowbite-svelte';
     import { PlusOutline } from 'flowbite-svelte-icons';
+    import { PUBLIC_HOST } from '$env/static/public';
 
     let { data } = $props();
     const radios = $derived(data.radios);
@@ -16,7 +17,7 @@
     {#each radios as radio (radio.id)}
         <div class="space-y-4">
             <Card
-                img={`/api/image?url=${encodeURIComponent(radio.cover)}`}
+                img={`${PUBLIC_HOST}/api/image?url=${encodeURIComponent(radio.cover)}`}
                 href={resolve(`/radio/${radio.id}`)}
             >
                 <div class="m-2 mt-3 flex h-12 items-center justify-center overflow-hidden">

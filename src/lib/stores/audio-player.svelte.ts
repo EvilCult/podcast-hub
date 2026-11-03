@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { PUBLIC_HOST } from '$env/static/public';
 
 export type PlayerEpisode = {
     id: number;
@@ -59,7 +60,7 @@ async function save() {
     }
 
     try {
-        await fetch(`/api/episode/${player.episode.id}/history`, {
+        await fetch(`${PUBLIC_HOST}/api/episode/${player.episode.id}/history`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -75,7 +76,7 @@ async function save() {
 
 async function loadProgress(episodeId: number): Promise<number> {
     try {
-        const response = await fetch(`/api/episode/${episodeId}/history`);
+        const response = await fetch(`${PUBLIC_HOST}/api/episode/${episodeId}/history`);
 
         if (!response.ok) {
             return 0;
@@ -210,7 +211,7 @@ function updateMetadata() {
     // iOS rejects artwork without `sizes` and falls back to the app icon;
     // absolute URL is safer in standalone PWA context.
     const artworkSrc = player.radio.cover
-        ? `${location.origin}/api/image?url=${encodeURIComponent(player.radio.cover)}`
+        ? `${PUBLIC_HOST}/api/image?url=${encodeURIComponent(player.radio.cover)}`
         : '';
 
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -218,16 +219,20 @@ function updateMetadata() {
         artist: player.radio.title,
         artwork: artworkSrc
             ? [96, 128, 192, 256, 384, 512].map((s) => ({
-                    src: artworkSrc,
-                    sizes: `${s}x${s}`
-                }))
+                  src: artworkSrc,
+                  sizes: `${s}x${s}`
+              }))
             : []
     });
 }
 
 /** Push current position/duration to the lock screen / system media UI. */
 function updatePositionState() {
-    if (!browser || !('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) {
+    if (
+        !browser ||
+        !('mediaSession' in navigator) ||
+        !('setPositionState' in navigator.mediaSession)
+    ) {
         return;
     }
     const duration = player.duration;
@@ -263,7 +268,7 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
     // Pass the DB duration so the server can compute remaining Content-Length.
     const durationParam =
         episode.duration && episode.duration > 0 ? `&duration=${episode.duration}` : '';
-    baseUrl = `/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}`;
+    baseUrl = `${PUBLIC_HOST}/api/transcode?url=${encodeURIComponent(episode.url)}${durationParam}`;
 
     // Resume: load the stream starting at the saved position.
     const saved = await loadProgress(episode.id);
@@ -299,10 +304,7 @@ export function togglePlay() {
 
 export function seek(seconds: number) {
     if (!audio || !player.episode) return;
-    const target = Math.max(
-        0,
-        Math.min(player.duration || Infinity, absolutePosition() + seconds)
-    );
+    const target = Math.max(0, Math.min(player.duration || Infinity, absolutePosition() + seconds));
     setPosition(target);
 }
 

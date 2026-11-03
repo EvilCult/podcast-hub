@@ -17,6 +17,7 @@
         setPosition,
         togglePlay
     } from '$lib/stores/audio-player.svelte';
+    import { PUBLIC_HOST } from '$env/static/public';
 
     let audio: HTMLAudioElement;
 
@@ -45,7 +46,7 @@
         {#if player.episode && player.radio?.cover}
             <img
                 class="size-12 rounded object-cover"
-                src={`/api/image?url=${encodeURIComponent(player.radio.cover)}`}
+                src={`${PUBLIC_HOST}/api/image?url=${encodeURIComponent(player.radio.cover)}`}
                 alt=""
             />
         {:else}
@@ -56,9 +57,7 @@
             </div>
         {/if}
         {#if player.loading && hasEpisode}
-            <div
-                class="absolute inset-0 flex items-center justify-center rounded bg-black/40"
-            >
+            <div class="absolute inset-0 flex items-center justify-center rounded bg-black/40">
                 <Spinner class="size-6 text-white" />
             </div>
         {/if}

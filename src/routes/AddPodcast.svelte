@@ -1,5 +1,6 @@
 <script lang="ts">
     let { popupModal = $bindable(), podcast_url = $bindable(), invalidateAll } = $props();
+    import { PUBLIC_HOST } from '$env/static/public';
 
     import {
         Button,
@@ -22,7 +23,7 @@
         postLoading = true;
 
         try {
-            const res = await fetch('/api/radio', {
+            const res = await fetch(`${PUBLIC_HOST}/api/radio`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

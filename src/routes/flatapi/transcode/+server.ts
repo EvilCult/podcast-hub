@@ -8,6 +8,7 @@ import { promisify } from 'util';
 import { DEVICE_PROFILE } from '$lib/server/transcode';
 import { INTERNAL_AUDIO_KEY } from '$lib/server/audio';
 import { dev } from '$app/environment';
+import { PUBLIC_HOST } from '$env/static/public';
 
 const execFileAsync = promisify(execFile);
 
@@ -53,9 +54,7 @@ async function probeBitRate(targetUrl: string): Promise<number | null> {
 // proxy). Plain HTTP to the app's own port: the external origin may be
 // HTTPS, which the app itself doesn't serve.
 const internalAudioUrl = (requestUrl: URL, audioUrl: string) => {
-    const base = dev
-        ? requestUrl.origin
-        : `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
+    const base = dev ? requestUrl.origin : PUBLIC_HOST;
     return `${base}/api/audio?url=${encodeURIComponent(audioUrl)}&key=${INTERNAL_AUDIO_KEY}`;
 };
 
