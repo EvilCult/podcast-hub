@@ -169,7 +169,7 @@ See the [API Reference](./Docs/API_DOCS_EN.md) ([中文版](./Docs/API_DOCS_CN.m
 │       ├── settings/        # Settings page
 │       └── login/           # Login page
 ├── static/                  # Static assets
-├── Dockerfile               # Image build (Node 22 + FFmpeg)
+├── Dockerfile               # Image build (Node 24 + FFmpeg)
 └── .env.example             # Example environment configuration
 ```
 
