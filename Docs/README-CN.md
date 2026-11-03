@@ -1,6 +1,6 @@
 # Podcast Hub 📻
 
-[![podcast-hub](https://raw.githubusercontent.com/evilcult/podcast-hub/main/Docs/Preview.png)](https://github.com/evilcult/podcast-hub)
+[![podcast-hub](./Preview.png)](https://github.com/evilcult/podcast-hub)
 
 [English](../README.md)
 
