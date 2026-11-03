@@ -5,19 +5,23 @@
     import {
         Button,
         Input,
-        ButtonGroup,
         Modal,
-        Select,
         Spinner,
         Toast,
-        ToastContainer
+        ToastContainer,
+        Dropdown,
+        DropdownItem
     } from 'flowbite-svelte';
+    import { ChevronDownOutline } from 'flowbite-svelte-icons';
     import { slide, fly } from 'svelte/transition';
 
     let postLoading = $state(false);
-    // Input source selector: explicit instead of auto-detecting from the URL.
-    // Switching it never touches the input's existing state (podcast_url).
+    const sourceItems = [
+        { label: 'Apple', value: 'apple' },
+        { label: 'RSS', value: 'rss' }
+    ];
     let source = $state('apple');
+    let dropdownOpen = $state(false);
 
     async function handelAddPodcast() {
         postLoading = true;
@@ -32,7 +36,7 @@
             });
 
             if (!res.ok) {
-                show('添加失败');
+                show('Failed to add podcast');
                 popupModal = false;
                 podcast_url = '';
                 postLoading = false;
@@ -43,9 +47,9 @@
             podcast_url = '';
             postLoading = false;
             await invalidateAll();
-            show('添加成功');
+            show('Podcast added successfully');
         } catch (error) {
-            show('添加失败');
+            show('Failed to add podcast');
             console.log(error);
             popupModal = false;
             podcast_url = '';
@@ -64,45 +68,54 @@
     }
 </script>
 
-<Modal form bind:open={popupModal} size="xs" transition={slide}>
+<Modal form bind:open={popupModal} size="sm" transition={slide}>
     <!-- Focus sink: Flowbite's Dialog auto-focuses the first input/select/button
          on open ([data-autofocus] takes priority). Park focus here so nothing
          visibly focusable is pre-selected. -->
     <div tabindex="-1" data-autofocus class="outline-none" aria-hidden="true"></div>
     <div class="text-center">
-        <h3 class="mb-5 text-base font-normal text-gray-500 dark:text-gray-400">添加新的PodCast</h3>
-        <div class="space-x-2">
-            <ButtonGroup class="w-full">
-                <!-- Native <select> renders ~2px taller than <input> with identical
-                     padding (browser quirk, no appearance-none here), so pin both
-                     inner elements to the same height: text-sm (20px) + py-2.5 (20px)
-                     + border (2px) = 42px, border-box. -->
-                <Select
-                    bind:value={source}
-                    disabled={postLoading}
-                    class="w-24 shrink-0 [&_select]:h-10.5"
-                >
-                    <option value="apple">Apple</option>
-                    <option value="rss">RSS</option>
-                </Select>
-                <Input
-                    id="input-addon-button"
-                    type="text"
-                    class="[&_input]:h-10.5"
-                    placeholder={source === 'apple'
-                        ? 'https://podcasts.apple.com/us/podcast/xxxxxxxx'
-                        : 'https://example.com/feed.xml'}
-                    bind:value={podcast_url}
-                    disabled={postLoading}
-                />
-                {#if postLoading}
-                    <Button color="primary" disabled>
-                        <Spinner type="dots" color="gray" class="size-4" />
-                    </Button>
+        <h3 class="mb-5 text-base font-normal text-gray-500 dark:text-gray-400">Add a Podcast</h3>
+        <div class="flex">
+            <Button
+                color="primary"
+                class="rounded-e-none border border-e-0 border-primary-700 whitespace-nowrap"
+            >
+                {#if source === 'apple'}
+                    Apple
                 {:else}
-                    <Button color="primary" onclick={handelAddPodcast}>Add</Button>
+                    RSS
                 {/if}
-            </ButtonGroup>
+                <ChevronDownOutline class="ms-2 h-6 w-6 text-white dark:text-white" />
+            </Button>
+            <Dropdown simple bind:isOpen={dropdownOpen}>
+                {#each sourceItems as item (item.label)}
+                    <DropdownItem
+                        onclick={() => {
+                            source = item.value;
+                            dropdownOpen = false;
+                        }}>{item.label}</DropdownItem
+                    >
+                {/each}
+            </Dropdown>
+
+            <Input
+                type="text"
+                class="rounded-none py-2.5"
+                placeholder={source === 'apple'
+                    ? 'https://podcasts.apple.com/us/podcast/xxxxxxxx'
+                    : 'https://example.com/feed.xml'}
+                bind:value={podcast_url}
+                disabled={postLoading}
+            />
+            {#if postLoading}
+                <Button color="primary" disabled class="rounded-s-none p-2!">
+                    <Spinner type="dots" color="gray" class="size-4" />
+                </Button>
+            {:else}
+                <Button color="primary" onclick={handelAddPodcast} class="rounded-s-none p-2!"
+                    >Subscribe</Button
+                >
+            {/if}
         </div>
     </div>
 </Modal>
