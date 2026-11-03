@@ -169,7 +169,7 @@ npm run preview
 │       ├── settings/        # 设置页面
 │       └── login/           # 登录页面
 ├── static/                  # 静态资源
-├── Dockerfile               # 镜像构建 (Node 22 + FFmpeg)
+├── Dockerfile               # 镜像构建 (Node 24 + FFmpeg)
 └── .env.example             # 环境变量示例
 ```
 
