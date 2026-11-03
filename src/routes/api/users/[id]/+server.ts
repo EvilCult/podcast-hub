@@ -14,13 +14,13 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
         return json({ error: 'Invalid user id' }, { status: 400 });
     }
     if (id === 1) {
-        return json({ error: '不能删除管理员' }, { status: 400 });
+        return json({ error: 'Cannot delete the admin' }, { status: 400 });
     }
     if (id === locals.user.id) {
-        return json({ error: '不能删除自己' }, { status: 400 });
+        return json({ error: 'Cannot delete yourself' }, { status: 400 });
     }
     if (!getUserById(id)) {
-        return json({ error: '用户不存在' }, { status: 404 });
+        return json({ error: 'User not found' }, { status: 404 });
     }
 
     deleteUser(id);

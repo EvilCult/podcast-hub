@@ -164,13 +164,13 @@
             >
                 {data.radio.digest}
             </div>
-            <div class="mt-2 text-xs text-gray-400">最后更新: {fmtTs(data.radio.last_update)}</div>
+            <div class="mt-2 text-xs text-gray-400">Last updated: {fmtTs(data.radio.last_update)}</div>
             <div class="mt-4 flex w-full items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                     <Button pill onclick={() => episodes[0] && play(episodes[0])}
                         >Play <PlaySolid class="ml-2" /></Button
                     >
-                    <Button pill outline color="dark" title="切换单集排序" onclick={toggleSort}>
+                    <Button pill outline color="dark" title="Toggle episode sort order" onclick={toggleSort}>
                         {sortAsc ? 'Oldest' : 'Newest'}
                         {#if sortAsc}
                             <ArrowUpOutline class="ms-2 h-5 w-5" />
@@ -182,7 +182,7 @@
                         pill
                         outline={true}
                         class="size-8 p-2!"
-                        title={hidePlayed ? '显示已听单集' : '隐藏已听单集'}
+                        title={hidePlayed ? 'Show listened episodes' : 'Hide listened episodes'}
                         onclick={toggleHidePlayed}
                     >
                         {#if hidePlayed}
@@ -196,7 +196,7 @@
                     pill
                     outline={true}
                     class="size-8 p-2!"
-                    title="删除播客"
+                    title="Delete podcast"
                     onclick={() => (popupModal = true)}
                 >
                     <TrashBinOutline class="size-5 text-primary-700" />
@@ -224,7 +224,7 @@
         </div>
     {/if}
     {#if !loading && episodes.length === 0}
-        <div class="py-12 text-center text-sm text-gray-400">还没有单集</div>
+        <div class="py-12 text-center text-sm text-gray-400">No episodes yet</div>
     {/if}
 </div>
 <DelPodcast bind:popupModal radio_id={radio.id} />

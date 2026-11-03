@@ -69,7 +69,7 @@
             {#if player.episode}
                 {player.episode.title} - {player.radio?.title}
             {:else}
-                <span class="text-gray-400 dark:text-gray-500">暂无播放内容</span>
+                <span class="text-gray-400 dark:text-gray-500">Nothing playing</span>
             {/if}
         </div>
 
@@ -80,7 +80,7 @@
             max={player.duration || 0}
             step="1"
             value={player.currentTime}
-            aria-label="播放进度"
+            aria-label="Playback progress"
             disabled={!hasEpisode}
             oninput={(event) =>
                 setPosition(Number((event.currentTarget as HTMLInputElement).value))}
@@ -103,7 +103,7 @@
             color="light"
             pill={true}
             class="p-2!"
-            aria-label={player.playing ? '暂停' : '播放'}
+            aria-label={player.playing ? 'Pause' : 'Play'}
             disabled={!hasEpisode}
             onclick={togglePlay}
         >

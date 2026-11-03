@@ -115,6 +115,6 @@
         </div>
     {/if}
     {#if !loading && episodes.length === 0}
-        <div class="py-16 text-center text-sm text-gray-400">还没有收听记录</div>
+        <div class="py-16 text-center text-sm text-gray-400">No listening history yet</div>
     {/if}
 </div>

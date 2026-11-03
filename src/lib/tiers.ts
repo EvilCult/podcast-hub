@@ -10,10 +10,10 @@ export interface TierOption {
 }
 
 export const TIER_OPTIONS: TierOption[] = [
-    { name: 'smooth', label: '流畅', desc: '32kHz · 48kbps · 单声道' },
-    { name: 'standard', label: '标准', desc: '44.1kHz · 96kbps · 立体声' },
-    { name: 'high', label: '高品质', desc: '44.1kHz · 128kbps · 立体声' },
-    { name: 'original', label: '原始', desc: '不转码，直接源流' }
+    { name: 'smooth', label: 'Smooth', desc: '32kHz · 48kbps · Mono' },
+    { name: 'standard', label: 'Standard', desc: '44.1kHz · 96kbps · Stereo' },
+    { name: 'high', label: 'High Quality', desc: '44.1kHz · 128kbps · Stereo' },
+    { name: 'original', label: 'Original', desc: 'No transcoding, direct source stream' }
 ];
 
 export function isTierName(v: unknown): v is TierName {

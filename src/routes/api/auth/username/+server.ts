@@ -20,10 +20,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     const newUsername = typeof body.newUsername === 'string' ? body.newUsername.trim() : '';
     if (!newUsername) {
-        return json({ error: '用户名不能为空' }, { status: 400 });
+        return json({ error: 'Username cannot be empty' }, { status: 400 });
     }
     if (newUsername.length > 32) {
-        return json({ error: '用户名太长（最多 32 个字符）' }, { status: 400 });
+        return json({ error: 'Username is too long (max 32 characters)' }, { status: 400 });
     }
 
     const user = getUserById(locals.user.id);
@@ -34,7 +34,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         return json({ ok: true, username: user.username });
     }
     if (usernameTaken(newUsername)) {
-        return json({ error: '用户名已存在' }, { status: 400 });
+        return json({ error: 'Username already exists' }, { status: 400 });
     }
 
     updateUsername(user.id, newUsername);

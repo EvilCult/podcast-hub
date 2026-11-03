@@ -27,7 +27,7 @@
         unMsg = '';
         unOk = false;
         if (!usernameInput.trim()) {
-            unMsg = '用户名不能为空';
+            unMsg = 'Username cannot be empty';
             return;
         }
         unLoading = true;
@@ -39,14 +39,14 @@
             });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) {
-                unMsg = body.error ?? '修改失败';
+                unMsg = body.error ?? 'Update failed';
                 return;
             }
             unOk = true;
-            unMsg = '用户名修改成功';
+            unMsg = 'Username updated';
             await invalidateAll();
         } catch {
-            unMsg = '网络错误，请重试';
+            unMsg = 'Network error, please try again';
         } finally {
             unLoading = false;
         }
@@ -64,11 +64,11 @@
         pwMsg = '';
         pwOk = false;
         if (!oldPassword || !newPassword) {
-            pwMsg = '请填写原密码和新密码';
+            pwMsg = 'Enter the current and new passwords';
             return;
         }
         if (newPassword !== confirmPassword) {
-            pwMsg = '两次输入的新密码不一致';
+            pwMsg = 'The new passwords do not match';
             return;
         }
         pwLoading = true;
@@ -80,16 +80,16 @@
             });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) {
-                pwMsg = body.error ?? '修改失败';
+                pwMsg = body.error ?? 'Update failed';
                 return;
             }
             pwOk = true;
-            pwMsg = '密码修改成功';
+            pwMsg = 'Password updated';
             oldPassword = '';
             newPassword = '';
             confirmPassword = '';
         } catch {
-            pwMsg = '网络错误，请重试';
+            pwMsg = 'Network error, please try again';
         } finally {
             pwLoading = false;
         }
@@ -112,7 +112,7 @@
     async function savePreset() {
         presetMsg = '';
         if (!isTierName(preset)) {
-            presetMsg = '档位无效';
+            presetMsg = 'Invalid tier';
             return;
         }
         presetLoading = true;
@@ -123,9 +123,9 @@
                 body: JSON.stringify({ preset })
             });
             const body = await res.json().catch(() => ({}));
-            presetMsg = res.ok ? '已保存，新播放的节目生效' : (body.error ?? '保存失败');
+            presetMsg = res.ok ? 'Saved. Applies to newly played episodes.' : (body.error ?? 'Failed to save');
         } catch {
-            presetMsg = '网络错误，请重试';
+            presetMsg = 'Network error, please try again';
         } finally {
             presetLoading = false;
         }
@@ -140,7 +140,7 @@
     async function addUser() {
         userMsg = '';
         if (!newUsername.trim() || !newUserPassword) {
-            userMsg = '请输入用户名和密码';
+            userMsg = 'Enter a username and password';
             return;
         }
         userLoading = true;
@@ -152,44 +152,44 @@
             });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) {
-                userMsg = body.error ?? '添加失败';
+                userMsg = body.error ?? 'Failed to add user';
                 return;
             }
             newUsername = '';
             newUserPassword = '';
             await invalidateAll();
         } catch {
-            userMsg = '网络错误，请重试';
+            userMsg = 'Network error, please try again';
         } finally {
             userLoading = false;
         }
     }
 
     async function deleteUser(id: number, username: string) {
-        if (!confirm(`确定删除用户 ${username} 吗？他的历史和收藏会一并删除。`)) return;
+        if (!confirm(`Delete user ${username}? Their history and favorites will be deleted as well.`)) return;
         userMsg = '';
         try {
             const res = await fetch(`${PUBLIC_HOST}/api/users/${id}`, { method: 'DELETE' });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) {
-                userMsg = body.error ?? '删除失败';
+                userMsg = body.error ?? 'Failed to delete user';
                 return;
             }
             await invalidateAll();
         } catch {
-            userMsg = '网络错误，请重试';
+            userMsg = 'Network error, please try again';
         }
     }
 </script>
 
 <div class="mx-auto max-w-2xl p-4">
     <div class="mb-6 flex flex-col space-y-2">
-        <h1 class="text-xl font-medium text-gray-900 dark:text-white">设置</h1>
+        <h1 class="text-xl font-medium text-gray-900 dark:text-white">Settings</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">
-            当前用户：<span class="font-medium">{me.username}</span>
+            Current user: <span class="font-medium">{me.username}</span>
             {#if me.isAdmin}<span
                     class="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                    >管理员</span
+                    >Admin</span
                 >{/if}
         </p>
     </div>
@@ -203,22 +203,22 @@
                     savePreset();
                 }}
             >
-                <h2 class="text-xl font-medium text-gray-900 dark:text-white">转码档位</h2>
+                <h2 class="text-xl font-medium text-gray-900 dark:text-white">Transcoding tier</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Web 播放全部走转码。若源文件码率已低于所选档位，则直接使用源流，不做无用转码。
+                    Web playback always uses transcoding. If the source bitrate is already below the selected tier, the source stream is used directly instead of pointless transcoding.
                 </p>
                 <Label class="space-y-2">
-                    <span>档位</span>
+                    <span>Tier</span>
                     <Select bind:value={preset} disabled={presetLoading}>
                         {#each TIER_OPTIONS as opt (opt.name)}
-                            <option value={opt.name}>{opt.label}（{opt.desc}）</option>
+                            <option value={opt.name}>{opt.label} ({opt.desc})</option>
                         {/each}
                     </Select>
                 </Label>
                 {#if presetMsg}<p class="text-sm text-gray-500 dark:text-gray-400">
                         {presetMsg}
                     </p>{/if}
-                <Button type="submit" color="primary" disabled={presetLoading}>保存</Button>
+                <Button type="submit" color="primary" disabled={presetLoading}>Save</Button>
             </form>
         </Card>
 
@@ -230,15 +230,15 @@
                     updateUsername();
                 }}
             >
-                <h2 class="text-xl font-medium text-gray-900 dark:text-white">修改用户名</h2>
+                <h2 class="text-xl font-medium text-gray-900 dark:text-white">Change username</h2>
                 <Label class="space-y-2">
-                    <span>用户名</span>
+                    <span>Username</span>
                     <Input type="text" bind:value={usernameInput} disabled={unLoading} />
                 </Label>
                 {#if unMsg}<p class="text-sm {unOk ? 'text-green-600' : 'text-red-500'}">
                         {unMsg}
                     </p>{/if}
-                <Button type="submit" color="primary" disabled={unLoading}>保存</Button>
+                <Button type="submit" color="primary" disabled={unLoading}>Save</Button>
             </form>
         </Card>
 
@@ -250,30 +250,30 @@
                     changePassword();
                 }}
             >
-                <h2 class="text-xl font-medium text-gray-900 dark:text-white">修改密码</h2>
+                <h2 class="text-xl font-medium text-gray-900 dark:text-white">Change password</h2>
                 <Label class="space-y-2">
-                    <span>原密码</span>
+                    <span>Current password</span>
                     <Input type="password" bind:value={oldPassword} disabled={pwLoading} />
                 </Label>
                 <Label class="space-y-2">
-                    <span>新密码</span>
+                    <span>New password</span>
                     <Input type="password" bind:value={newPassword} disabled={pwLoading} />
                 </Label>
                 <Label class="space-y-2">
-                    <span>确认新密码</span>
+                    <span>Confirm new password</span>
                     <Input type="password" bind:value={confirmPassword} disabled={pwLoading} />
                 </Label>
                 {#if pwMsg}<p class="text-sm {pwOk ? 'text-green-600' : 'text-red-500'}">
                         {pwMsg}
                     </p>{/if}
-                <Button type="submit" color="primary" disabled={pwLoading}>修改密码</Button>
+                <Button type="submit" color="primary" disabled={pwLoading}>Change password</Button>
             </form>
         </Card>
 
         {#if me.isAdmin}
             <Card class="w-full max-w-none p-4 sm:p-6 md:p-8">
                 <div class="flex flex-col space-y-6">
-                    <h2 class="text-xl font-medium text-gray-900 dark:text-white">用户管理</h2>
+                    <h2 class="text-xl font-medium text-gray-900 dark:text-white">User management</h2>
                     <div class="flex flex-col space-y-2">
                         {#each users as u (u.id)}
                             <div
@@ -283,12 +283,12 @@
                                     >{u.username}</span
                                 >
                                 {#if u.id === 1}
-                                    <Button size="xs" color="light" disabled>管理员</Button>
+                                    <Button size="xs" color="light" disabled>Admin</Button>
                                 {:else}
                                     <Button
                                         size="xs"
                                         color="red"
-                                        onclick={() => deleteUser(u.id, u.username)}>删除</Button
+                                        onclick={() => deleteUser(u.id, u.username)}>Delete</Button
                                     >
                                 {/if}
                             </div>
@@ -302,14 +302,14 @@
                         }}
                     >
                         <h3 class="text-base font-medium text-gray-900 dark:text-white">
-                            添加用户
+                            Add user
                         </h3>
                         <Label class="space-y-2">
-                            <span>用户名</span>
+                            <span>Username</span>
                             <Input type="text" bind:value={newUsername} disabled={userLoading} />
                         </Label>
                         <Label class="space-y-2">
-                            <span>密码</span>
+                            <span>Password</span>
                             <Input
                                 type="text"
                                 bind:value={newUserPassword}
@@ -317,7 +317,7 @@
                             />
                         </Label>
                         {#if userMsg}<p class="text-sm text-red-500">{userMsg}</p>{/if}
-                        <Button type="submit" color="primary" disabled={userLoading}>添加</Button>
+                        <Button type="submit" color="primary" disabled={userLoading}>Add</Button>
                     </form>
                 </div>
             </Card>

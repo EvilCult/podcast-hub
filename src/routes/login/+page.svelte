@@ -11,7 +11,7 @@
 
     async function login() {
         if (!username.trim() || !password) {
-            errorMsg = '请输入用户名和密码';
+            errorMsg = 'Enter your username and password';
             return;
         }
         loading = true;
@@ -24,12 +24,12 @@
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                errorMsg = data.error ?? '登录失败';
+                errorMsg = data.error ?? 'Sign-in failed';
                 return;
             }
             await goto(resolve('/'));
         } catch {
-            errorMsg = '网络错误，请重试';
+            errorMsg = 'Network error, please try again';
         } finally {
             loading = false;
         }
@@ -45,9 +45,9 @@
                 login();
             }}
         >
-            <h1 class="text-xl font-medium text-gray-900 dark:text-white">登录 PodCast Proxy</h1>
+            <h1 class="text-xl font-medium text-gray-900 dark:text-white">Sign in to PodCast Hub</h1>
             <Label class="space-y-2">
-                <span>用户名</span>
+                <span>Username</span>
                 <Input
                     type="text"
                     placeholder="admin"
@@ -57,7 +57,7 @@
                 />
             </Label>
             <Label class="space-y-2">
-                <span>密码</span>
+                <span>Password</span>
                 <Input
                     type="password"
                     placeholder="••••••••"
@@ -70,7 +70,7 @@
                 <p class="text-sm text-red-500">{errorMsg}</p>
             {/if}
             <Button type="submit" color="primary" disabled={loading} class="w-full">
-                {loading ? '登录中…' : '登录'}
+                {loading ? 'Signing in…' : 'Sign in'}
             </Button>
         </form>
     </Card>

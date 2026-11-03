@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const user = getUserByUsername(username);
     if (!user || !verifyPassword(password, user.password_hash)) {
-        return json({ error: '用户名或密码错误' }, { status: 401 });
+        return json({ error: 'Incorrect username or password' }, { status: 401 });
     }
 
     const token = signSession({ uid: user.id, username: user.username });

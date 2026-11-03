@@ -168,7 +168,7 @@ export function attachAudio(element: HTMLAudioElement) {
 
     audio.addEventListener('error', () => {
         player.loading = false;
-        player.error = '音频加载失败，请检查音频地址或跨域设置';
+        player.error = 'Failed to load audio. Check the audio URL or CORS settings.';
     });
 
     audio.addEventListener('ended', () => {
@@ -250,7 +250,7 @@ function updatePositionState() {
 
 export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
     if (!audio || !episode.url) {
-        player.error = '该 Episode 没有可播放的音频地址';
+        player.error = 'This episode has no playable audio URL';
         return;
     }
 
@@ -287,8 +287,8 @@ export async function playEpisode(episode: PlayerEpisode, radio: PlayerRadio) {
         // Anything else (e.g. NotSupportedError) means the stream itself failed.
         player.error =
             e instanceof DOMException && e.name === 'NotAllowedError'
-                ? '浏览器阻止了自动播放，请再次点击播放'
-                : `播放失败：${e instanceof Error ? e.message : '音频流加载失败'}`;
+                ? 'The browser blocked autoplay. Tap play again.'
+                : `Playback failed: ${e instanceof Error ? e.message : 'Failed to load audio stream'}`;
     }
 }
 

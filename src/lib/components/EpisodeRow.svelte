@@ -90,7 +90,7 @@
     <!-- favorite heart -->
     <button
         type="button"
-        aria-label={episode.is_fav ? '取消收藏' : '收藏'}
+        aria-label={episode.is_fav ? 'Remove from favorites' : 'Add to favorites'}
         class="shrink-0 rounded-full p-2.5 transition-colors hover:bg-gray-200/60 active:scale-95 dark:hover:bg-gray-700/60"
         onclick={(e) => {
             e.stopPropagation();
@@ -123,7 +123,7 @@
         {/if}
         <div class="mt-1.5 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             {#if played}
-                <span class="font-medium text-primary-600 dark:text-primary-400">已听</span>
+                <span class="font-medium text-primary-600 dark:text-primary-400">Listened</span>
             {:else if episode.pos && episode.pos > 0}
                 <span class="font-medium text-primary-600 dark:text-primary-400">
                     {formatDuration(episode.pos)}
@@ -134,7 +134,7 @@
             {/if}
             {#if showPlayTime && episode.play_time}
                 <span>·</span>
-                <span>上次听到 {formatPlayTime(episode.play_time)}</span>
+                <span>Listened to {formatPlayTime(episode.play_time)}</span>
             {/if}
         </div>
     </button>
@@ -143,7 +143,7 @@
     <div class="relative shrink-0" data-ep-menu>
         <button
             type="button"
-            aria-label="更多操作"
+            aria-label="More actions"
             class="rounded-full p-2.5 transition-colors hover:bg-gray-200/60 active:scale-95 dark:hover:bg-gray-700/60"
             onclick={(e) => {
                 e.stopPropagation();
@@ -164,7 +164,7 @@
                         onToggleFav(episode);
                     }}
                 >
-                    {episode.is_fav ? '取消收藏' : '收藏'}
+                    {episode.is_fav ? 'Remove from favorites' : 'Add to favorites'}
                 </button>
                 {#if !played}
                     <button
@@ -175,7 +175,7 @@
                             onMarkListened(episode);
                         }}
                     >
-                        标记为已听
+                        Mark as listened
                     </button>
                 {/if}
                 {#if canDelete}
@@ -187,7 +187,7 @@
                             onDelete(episode);
                         }}
                     >
-                        删除
+                        Delete
                     </button>
                 {/if}
             </div>

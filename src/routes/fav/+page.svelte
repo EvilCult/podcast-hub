@@ -120,7 +120,7 @@
     {/if}
     {#if !loading && episodes.length === 0}
         <div class="py-16 text-center text-sm text-gray-400">
-            还没有收藏，去单集列表点那颗小心心吧
+            No favorites yet — tap the heart on an episode to add one.
         </div>
     {/if}
 </div>
